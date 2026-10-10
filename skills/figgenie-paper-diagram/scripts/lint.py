@@ -9,15 +9,23 @@ Measures the SVG in headless Chromium (exact boxes in pt), then checks, in this 
   fonts      font families that Chromium could not resolve                            warn
   text       size < 5 pt error, < 6 pt warn; > 3 distinct sizes warn; > 2 families warn
   overflow   a node's label leaves its box (or padding < 1.5 pt)                      error / warn
+             (a label marked data-label="outside" sits beside its box on purpose: it only has to stay clear of it)
   overlap    node boxes intersect; text on text; text on a line it does not belong to error / error / warn
-             (text is measured on its glyph ink band, 0.75 em above / 0.25 em below the baseline, not on
+             (text is measured on its glyph ink, read from the font file -- about 0.75 em above the baseline, and
+             below it only as far as its descenders reach (0.25 em for g/p/y, a comma less, none for 'Attention') -- not on
              Chromium's line box; step-badge digits are exempt from the text-on-line check)
   contain    node not inside its container (spec parent, or c:* box it visually sits in) error
   align      edges or centres of boxes within 0.3–2 pt of each other but not equal    warn
+             (only boxes of the same panel are compared; text-only nodes and anything inside data-scale="data" --
+             bars, Gantt rows drawn to scale -- are skipped; a row whose gaps differ by 2x or more, or that another
+             box interrupts, is read as deliberate grouping)
   centre     label centre off the box centre by > 1 pt                                warn
   edges      dangling end (> 3 pt from any box), missing arrowhead, line crossing a box it does not connect  warn
   colour     > 12 distinct fills, > 2 saturated fills, > 3 stroke widths, width outside 0.3–2.5 pt  warn
-  density    more labelled boxes than the column budget (q3 warn, p90 error-ish -> warn+)
+  style      (spec meta.style set, references/styles/<style>.json): labels bold, every box outlined in dark ink,
+             box stroke band; the style may raise the saturated-fill ceiling                           warn / info
+  density    more labelled boxes than the column budget (q3 warn, p90 error-ish -> warn+); in a composite figure
+             (panels[] with axis "part") each part is held to the single-column budget instead
   spec       every spec node/edge/container/lane/step/legend has its <g id="..">, labels match      error / warn
   glyphs     characters that no shipped / embedded / system-resolved face covers (needs fonttools)  warn
   heads      an arrowhead overlapping a line it does not connect (a tier divider, another edge);
@@ -118,6 +126,19 @@ class Lint:
         self.texts = [e for e in els if e['tag'] == 'text' and e.get('text')]
         self.W, self.H = data['W'], data['H']
         self.mech = ((self.spec.get('meta') or {}).get('kind') == 'mechanism')
+        sp = [q for q in (self.spec.get('panels') or []) if isinstance(q, dict) and q.get('id')]
+        self.panel_parent = {q['id']: q.get('parent') for q in sp}
+        self.panel_axis = {q['id']: q.get('axis', 'alternatives') for q in sp}
+        self.composite = any(a == 'part' for a in self.panel_axis.values())
+        self.spec_panel = {}
+        for arr, pre in (('nodes', 'n:'), ('containers', 'c:'), ('lanes', 'l:'), ('annotations', 'a:')):
+            for x in self.spec.get(arr) or []:
+                if isinstance(x, dict) and x.get('panel'): self.spec_panel[pre + x['id']] = x['panel']
+        ckind = {f"c:{c['id']}": c.get('kind') for c in (self.spec.get('containers') or []) if isinstance(c, dict) and c.get('id')}
+        self.panel_boxes = {}                                         # p:<id> groups and containers of kind 'panel'
+        for gid in self.groups:
+            if gid.startswith('p:') or (gid.startswith('c:') and ckind.get(gid) == 'panel'):
+                self.panel_boxes[gid[2:]] = self.shape_of(gid)
 
     @staticmethod
     def base_id(gid):
@@ -169,23 +190,68 @@ class Lint:
                 if best is None or area(box(e)) > area(box(best)): best = e
         return box(best) if best else self.shape_of(gid)
 
+    def frame_of(self, gid):
+        """The box a container or lane stands for: a lane's band (band_of: its largest rect even when unpainted --
+        a painted slot drawn inside the lane group must not become the lane), any other group's shape_of."""
+        return self.band_of(gid) if kind_of(self.groups.get(gid, {})) == 'lane' else self.shape_of(gid)
+
+    def panel_scope(self, gid):
+        """The panel a node is drawn in, so that boxes of different panels are never compared with each other:
+        data-panel / the @<panel> copy suffix, the p:<id> group it is nested in, the smallest panel box (p:<id> or
+        a container of kind 'panel') around it, else its spec panel; None in a one-panel figure."""
+        a = self.groups[gid].get('attrs') or {}
+        if a.get('data-panel'): return a['data-panel']
+        if '@' in gid: return gid.split('@', 1)[1]
+        g = self.groups[gid].get('parentGroup')
+        while g:
+            if g.startswith('p:'): return g[2:]
+            g = (self.groups.get(g) or {}).get('parentGroup')
+        if self.panel_boxes:
+            b = self.shape_of(gid)
+            cands = [(area(pb), pid) for pid, pb in self.panel_boxes.items() if inside(b, pb, -0.5)]
+            if cands: return min(cands)[1]
+        return self.spec_panel.get(self.base_id(gid))
+
+    def part_of(self, pid):
+        """The top-level panel (a composite figure's part) that panel pid belongs to."""
+        seen = set()
+        while pid and self.panel_parent.get(pid) and pid not in seen:
+            seen.add(pid); pid = self.panel_parent[pid]
+        return pid
+
     def texts_of(self, gid):
         return [e for e in self.children.get(gid, []) if e['tag'] == 'text' and e.get('text')]
 
+    def ink(self, e):
+        """(above, below) pt of the text's glyph ink around its baseline: measured on the font file (K.ink_band) so a
+        label without descenders gets no descender band; `text_ink_above_em` / `text_ink_below_em` (thresholds, default
+        0.75 / 0.25 em) are the estimate when the face cannot be resolved."""
+        t = self.thr.get('lint', {}); fs = e.get('fontSize') or 0
+        fam = (e.get('fontFamily') or '').split(',')[0].strip('"\' ')
+        key = K.resolve_font(fam, default=False) if fam else None
+        w = str(e.get('fontWeight') or '400'); bold = w in ('bold', 'bolder') or (w.isdigit() and int(w) >= 600)
+        return K.ink_band(e.get('text', ''), fs, key, bold, t.get('text_ink_above_em', 0.75), t.get('text_ink_below_em', 0.25))
+
     def tbox(self, e):
-        """Ink box of a text element: the glyph band `text_ink_above_em` above and `text_ink_below_em` below
-        the baseline (thresholds, default 0.75 / 0.25 em). Chromium's line box is font-dependent and tall
-        (TeX Gyre Heros: 1.385 em), so measuring on it would flag every ordinary 1.15-1.2 em line pitch as an
-        overlap and pad every box for ascender space that no glyph uses. Falls back to the raw box when the
-        renderer recorded no baseline (old dumps, rotated text)."""
+        """Ink box of a text element: its glyph band above and below the baseline (self.ink). Chromium's line box is
+        font-dependent and tall (TeX Gyre Heros: 1.385 em), so measuring on it would flag every ordinary 1.15-1.2 em
+        line pitch as an overlap and pad every box for ascender space that no glyph uses. Falls back to the raw box when
+        the renderer recorded no baseline (old dumps)."""
         b = box(e); fs = e.get('fontSize') or 0; bl = e.get('baseline')
+        if e.get('rotated') and fs and e.get('baselineX') is not None and abs(abs(e.get('angle') or 0) - 90) < 1:
+            # text turned by ±90°: the ink band runs across x around the baseline line x = baselineX; glyph tops point
+            # to -x for -90° (reading upwards) and to +x for +90°. Keep the measured extent along y (the advance).
+            above, below = self.ink(e)
+            bx = e['baselineX']
+            x0, x1 = (bx - above, bx + below) if (e.get('angle') or 0) < 0 else (bx - below, bx + above)
+            return (max(b[0], x0), b[1], min(b[2], x1), b[3]) if min(b[2], x1) > max(b[0], x0) else b
         if not fs or bl is None or e.get('rotated'): return b
-        t = self.thr.get('lint', {}); above = t.get('text_ink_above_em', 0.75); below = t.get('text_ink_below_em', 0.25)
+        above, below = self.ink(e)
         asc = bl - b[1]
         if asc <= 0 or asc > 1.6 * fs: return b                      # rotated or oddly placed: keep the raw box
         h = b[3] - b[1]
         desc = (h - asc) if h < 1.7 * fs else 0.27 * asc              # single line: measured; multi-line: estimated
-        top = max(b[1], bl - above * fs); bottom = min(b[3], b[3] - desc + below * fs)
+        top = max(b[1], bl - above); bottom = min(b[3], b[3] - desc + below)
         return (b[0], top, b[2], bottom) if bottom > top else b
 
     def has_symbol(self, gid):
@@ -226,7 +292,8 @@ class Lint:
         sizes, fams = set(), set()
         for e in self.texts:
             fs = e.get('fontSize') or 0; fams.add((e.get('fontFamily') or '').split(',')[0].strip('"\' '))
-            in_badge = kind_of(self.groups.get(e.get('parentGroup') or '', {})) == 'step'
+            in_badge = kind_of(self.groups.get(e.get('parentGroup') or '', {})) == 'step' or \
+                (e.get('inSymbol') and len(e.get('text', '').strip()) <= 2)   # a digit in a badge glyph (place_text.py line @badge)
             if not in_badge: sizes.add(round(fs * 2) / 2)
             err, wrn = (t.get('font_min_error', 5.0) - 1.0, t.get('font_min_warn', 6.0) - 1.0) if in_badge else (t.get('font_min_error', 5.0), t.get('font_min_warn', 6.0))
             if fs < err: self.add('error', 'text.size', f'"{e["text"][:40]}" is {fs:.1f} pt (< {err} pt is unreadable in print)', [e.get('parentGroup')], box(e))
@@ -240,6 +307,11 @@ class Lint:
             sb = self.shape_of(gid); picture = self.is_picture_box(gid)
             for e in self.texts_of(gid):
                 tb = self.tbox(e)
+                if e.get('labelOutside'):                                 # data-label="outside": beside the box on purpose
+                    if inter(tb, (sb[0] + 0.5, sb[1] + 0.5, sb[2] - 0.5, sb[3] - 0.5)):
+                        self.add('error', 'text.overflow', f'label "{e["text"][:40]}" of {gid} is marked data-label="outside" but '
+                                 f'overlaps its box; move it clear of the box or drop the marker', [gid], tb)
+                    continue
                 if picture:                                               # a caption outside, or a label laid over it
                     if inter(tb, (sb[0] + 0.5, sb[1] + 0.5, sb[2] - 0.5, sb[3] - 0.5)) and not inside(tb, sb, -0.5):
                         self.add('error', 'text.overflow', f'label "{e["text"][:40]}" straddles the edge of the picture in {gid}; '
@@ -257,7 +329,7 @@ class Lint:
                 a, b = nb[ids[i]], nb[ids[j]]
                 if inter(a, b) and overlap_area(a, b) > 0.5:
                     self.add('error', 'overlap.nodes', f'{ids[i]} and {ids[j]} overlap', [ids[i], ids[j]], (max(a[0], b[0]), max(a[1], b[1]), min(a[2], b[2]), min(a[3], b[3])))
-        cb = {gid: self.shape_of(gid) for gid in list(self.by_kind.get('container', {})) + list(self.by_kind.get('lane', {}))}
+        cb = {gid: self.frame_of(gid) for gid in list(self.by_kind.get('container', {})) + list(self.by_kind.get('lane', {}))}
         cids = list(cb)
         for i in range(len(cids)):
             for j in range(i + 1, len(cids)):
@@ -287,7 +359,7 @@ class Lint:
 
     def check_contain(self):
         nb = self.node_boxes(); cb = {gid: self.shape_of(gid) for gid in self.by_kind.get('container', {})}
-        lb = {gid: self.shape_of(gid) for gid in self.by_kind.get('lane', {})}
+        lb = {gid: self.band_of(gid) for gid in self.by_kind.get('lane', {})}
         parent = {}
         for n in (self.spec.get('nodes') or []): parent[f"n:{n['id']}"] = n.get('parent')
         for c in (self.spec.get('containers') or []): parent[f"c:{c['id']}"] = c.get('parent')
@@ -305,13 +377,18 @@ class Lint:
                         self.add('error', 'contain.straddle', f'{gid} straddles the border of {cid}', [gid, cid], b)
 
     def check_align(self):
-        nb = self.node_boxes(); ids = list(nb)
+        # Snapping advice only makes sense between drawn boxes that a reader compares: skip text-only nodes (their
+        # box is the text), anything drawn to scale from data (data-scale="data": bar lengths, Gantt rows), and
+        # pairs from different panels (each panel is laid out on its own).
+        allb = self.node_boxes()
+        nb = {i: b for i, b in allb.items() if self.explicit_shape(i) is not None and not self.groups[i].get('scaleData')}
+        ids = list(nb); scope = {i: self.panel_scope(i) for i in ids}
         seen = set()
         for axis, name in ((0, 'left'), (2, 'right'), (1, 'top'), (3, 'bottom')):
             vals = sorted((nb[i][axis], i) for i in ids)
             for (v1, i1), (v2, i2) in zip(vals, vals[1:]):
                 d = v2 - v1
-                if 0.3 < d <= 2.0 and (i1, i2, name) not in seen:
+                if 0.3 < d <= 2.0 and (i1, i2, name) not in seen and scope[i1] == scope[i2]:
                     # only flag when the two boxes are in the same row/column (share extent on the other axis)
                     a, b = nb[i1], nb[i2]
                     same = (a[1] < b[3] and b[1] < a[3]) if axis in (0, 2) else (a[0] < b[2] and b[0] < a[2])
@@ -321,26 +398,36 @@ class Lint:
             vals = sorted(((nb[i][0] + nb[i][2]) / 2 if axis == 'cx' else (nb[i][1] + nb[i][3]) / 2, i) for i in ids)
             for (v1, i1), (v2, i2) in zip(vals, vals[1:]):
                 d = v2 - v1
-                if 0.3 < d <= 1.5:
+                if 0.3 < d <= 1.5 and scope[i1] == scope[i2]:
                     a, b = nb[i1], nb[i2]
                     same = (a[0] < b[2] and b[0] < a[2]) if axis == 'cx' else (a[1] < b[3] and b[1] < a[3])
                     if same: self.add('warn', 'align.centre', f'{name} of {i1} and {i2} differ by {d:.1f} pt', [i1, i2])
-        # uneven gaps in a row of >=3 boxes that share the same container / lane
-        cb = {gid: self.shape_of(gid) for gid in list(self.by_kind.get('container', {})) + list(self.by_kind.get('lane', {}))}
+        # uneven gaps in a row of >=3 boxes that share the same panel and container / lane
+        cb = {gid: self.frame_of(gid) for gid in list(self.by_kind.get('container', {})) + list(self.by_kind.get('lane', {}))}
         def holder(b):
             cands = [(area(cb[c]), c) for c in cb if inside(b, cb[c], -0.5)]
             return min(cands)[1] if cands else None
         rows = {}
-        for i in ids: rows.setdefault((holder(nb[i]), round((nb[i][1] + nb[i][3]) / 2 / 4)), []).append(i)
+        for i in ids: rows.setdefault((scope[i], holder(nb[i]), round((nb[i][1] + nb[i][3]) / 2 / 4)), []).append(i)
         for r, members in rows.items():
             if len(members) < 3: continue
-            ms = sorted(members, key=lambda i: nb[i][0]); gaps = [nb[b][0] - nb[a][2] for a, b in zip(ms, ms[1:])]
-            if all(g > 0 for g in gaps) and max(gaps) - min(gaps) > 3.0 and max(gaps) < 60:
-                self.add('warn', 'align.gaps', f'uneven gaps {[round(g, 1) for g in gaps]} pt between {", ".join(ms)}', ms)
+            ms = sorted(members, key=lambda i: nb[i][0])
+            # split the row where another box (a tall band, a box of another row) stands in the gap
+            runs, cur = [], [ms[0]]
+            for a, b in zip(ms, ms[1:]):
+                gap = (nb[a][2], max(nb[a][1], nb[b][1]), nb[b][0], min(nb[a][3], nb[b][3]))
+                if any(o not in (a, b) and gap[2] > gap[0] and inter(allb[o], gap) for o in allb): runs.append(cur); cur = [b]
+                else: cur.append(b)
+            runs.append(cur)
+            for run in runs:
+                if len(run) < 3: continue
+                gaps = [nb[b][0] - nb[a][2] for a, b in zip(run, run[1:])]
+                if all(g > 0 for g in gaps) and max(gaps) - min(gaps) > 3.0 and max(gaps) < 60 and max(gaps) < 2 * min(gaps):
+                    self.add('warn', 'align.gaps', f'uneven gaps {[round(g, 1) for g in gaps]} pt between {", ".join(run)}', run)
 
     def check_centre(self):
         for gid in self.by_kind.get('node', {}):
-            sb = self.shape_of(gid); ts = self.texts_of(gid)
+            sb = self.shape_of(gid); ts = [t for t in self.texts_of(gid) if not t.get('labelOutside')]
             if not ts: continue
             if self.has_symbol(gid) or self.has_image(gid): continue       # icon / picture + label composites are not centred labels
             cx = (sb[0] + sb[2]) / 2; cy = (sb[1] + sb[3]) / 2
@@ -348,12 +435,13 @@ class Lint:
             tb = (min(b[0] for b in bs), min(b[1] for b in bs), max(b[2] for b in bs), max(b[3] for b in bs))
             tcx = (tb[0] + tb[2]) / 2; tcy = (tb[1] + tb[3]) / 2
             anchored_left = all((t.get('anchor') or 'start') == 'start' and abs(self.tbox(t)[0] - sb[0]) < 6 for t in ts)
-            if abs(tcx - cx) > 1.0 and not anchored_left: self.add('warn', 'centre.x', f'label of {gid} is {tcx - cx:+.1f} pt off the box centre horizontally', [gid], tb)
+            xtol = 1.2 if all(t.get('rotated') for t in ts) else 1.0      # across a turned label: same ink-band model and tolerance as centre.y
+            if abs(tcx - cx) > xtol and not anchored_left: self.add('warn', 'centre.x', f'label of {gid} is {tcx - cx:+.1f} pt off the box centre horizontally', [gid], tb)
             if abs(tcy - cy) > 1.2 and len(ts) == 1 and sb[3] - sb[1] < 40: self.add('warn', 'centre.y', f'label of {gid} is {tcy - cy:+.1f} pt off the box centre vertically', [gid], tb)
 
     def check_edges(self):
         nb = self.node_boxes()
-        allb = dict(nb); allb.update({g: self.shape_of(g) for g in list(self.by_kind.get('container', {})) + list(self.by_kind.get('lane', {}))})
+        allb = dict(nb); allb.update({g: self.frame_of(g) for g in list(self.by_kind.get('container', {})) + list(self.by_kind.get('lane', {}))})
         spec_edges = {f"e:{e['id']}": e for e in (self.spec.get('edges') or [])}
         for gid, g in self.by_kind.get('edge', {}).items():
             lines = [e for e in self.children.get(gid, []) if e['tag'] in LINES and e.get('points')]
@@ -390,15 +478,70 @@ class Lint:
         mx = self.thr.get('lint', {}).get('max_fill_colours', 12)
         if len(colours) > mx: self.add('warn', 'colour.count', f'{len(colours)} distinct non-grey fills (good figures: median 6, p95 {mx}); merge roles')
         sat = [c for c in colours if saturated(c)]
-        if len(sat) > 2: self.add('warn', 'colour.saturated', f'{len(sat)} saturated fills {["#%02x%02x%02x" % c for c in sat]}; keep saturated colour for the accent only (≤ 2)')
+        msat = self.thr.get('lint', {}).get('max_saturated_fills', 2)       # a named style may allow more (references/styles/)
+        if len(sat) > msat: self.add('warn', 'colour.saturated', f'{len(sat)} saturated fills {["#%02x%02x%02x" % c for c in sat]}; keep saturated colour for the accent only (≤ {msat})')
         if len(widths) > 3: self.add('warn', 'stroke.widths', f'{len(widths)} distinct stroke widths {sorted(widths)}; use 2 (box 0.5–0.75, main path 1–1.5)')
         for w in widths:
             if w < 0.3: self.add('warn', 'stroke.thin', f'stroke width {w} pt is hairline-thin (< 0.3 pt) and may vanish in print')
             if w > 2.5: self.add('warn', 'stroke.thick', f'stroke width {w} pt is heavy (> 2.5 pt)')
 
+    def check_style(self):
+        """Named style (spec meta.style, references/styles/<style>.json): advisory checks that the figure carries the
+        style's signature -- bold labels, dark outlines on every box, box / frame stroke bands. Print floors are
+        checked elsewhere and are never relaxed here."""
+        st = self.thr.get('style')
+        if not st: return
+        name, t = st.get('style'), st.get('lint', {})
+        summary = []
+        texts = [e for e in self.texts if kind_of(self.groups.get(e.get('parentGroup') or '', {})) != 'step']
+        if texts and t.get('bold_text_share_min'):
+            def bold(e):
+                w = str(e.get('fontWeight') or '400')
+                return w in ('bold', 'bolder') or (w.isdigit() and int(w) >= 600)
+            nb = sum(1 for e in texts if bold(e)); share = nb / len(texts)
+            summary.append(f'labels bold {nb}/{len(texts)} ({"ok" if share >= t["bold_text_share_min"] else "below"} {t["bold_text_share_min"]:.0%})')
+            if share < t['bold_text_share_min']:
+                self.add('warn', 'style.weight', f'{share:.0%} of labels are bold; style {name} sets labels bold '
+                         f'(≥ {t["bold_text_share_min"]:.0%}) -- font-weight="bold" on the root or the label groups')
+        nodes = [g for g in self.by_kind.get('node', {}) if not self.is_picture_box(g)]
+        shapes = [(g, self.explicit_shape(g)) for g in nodes]
+        shapes = [(g, e) for g, e in shapes if e is not None and e['tag'] != 'image']
+        if shapes and t.get('outlined_node_share_min'):
+            lmax = t.get('outline_max_lightness', 0.35)
+            def dark(e):
+                c = rgb(e['stroke']) if e['stroke'] != 'none' and e['strokeWidth'] > 0 else None
+                return c is not None and max(c) / 255 <= lmax + 0.25 and sum(c) / 765 <= lmax
+            bare = [g for g, e in shapes if not dark(e)]
+            ok_out = 1 - len(bare) / len(shapes) >= t['outlined_node_share_min']
+            summary.append(f'boxes outlined in ink {len(shapes) - len(bare)}/{len(shapes)} ({"ok" if ok_out else "below"} {t["outlined_node_share_min"]:.0%})')
+            if not ok_out:
+                self.add('warn', 'style.outline', f'{len(bare)}/{len(shapes)} boxes have no dark outline; style {name} '
+                         f'outlines every box in ink (palette stroke)', bare[:8])
+        lo, hi = t.get('stroke_box_pt', (0, 99))
+        odd = sorted({round(e['strokeWidth'], 2) for g, e in shapes if e['stroke'] != 'none' and not lo <= e['strokeWidth'] <= hi})
+        if odd: self.add('info', 'style.stroke', f'box outlines {odd} pt; style {name} uses {lo}–{hi} pt (frames {t.get("stroke_frame_pt")})')
+        # always say that the style was checked, so a clean run is visibly a checked one (check.py repeats it)
+        self.add('info', 'style.checked', f'style {name}: ' + ('; '.join(summary) or 'nothing to check'))
+
     def check_density(self):
         n = len({self.base_id(g) for g in self.by_kind.get('node', {})} if self.mech else self.by_kind.get('node', {}))
         col = (self.spec.get('meta') or {}).get('column') or ('double' if self.W >= 380 else 'single')
+        if self.composite:
+            # a composite figure (panels[] with axis "part") is several figures in one frame: hold each part to the
+            # single-column budget, which is roughly the area a part gets, instead of the whole figure to one budget
+            bud = self.thr.get('lint', {}).get('node_budget', {}).get('single', {})
+            per = {}
+            for g in self.by_kind.get('node', {}):
+                # mechanism bands count labels, not copies: identical rows (Attention on every GPU) count once
+                lab = ' '.join(t['text'] for t in self.texts_of(g)).strip().lower() if self.mech else ''
+                per.setdefault(self.part_of(self.panel_scope(g)) or '(none)', set()).add(lab or self.base_id(g))
+            for part, ids in sorted(per.items()):
+                if bud and len(ids) > bud.get('p90', 99):
+                    self.add('warn', 'density.nodes', f'part {part} has {len(ids)} labelled boxes, above the single-column p90 {bud["p90"]} '
+                             f'that each part of a composite figure gets; merge repeated boxes (one tall box for identical rows, ×N) or move numbers to the caption')
+            self.add('info', 'density.nodes', f'composite figure: {n} labelled boxes in {len(per)} part(s) ' +
+                     ', '.join(f'{k} {len(v)}' for k, v in sorted(per.items())))
+            return
         bud = self.thr.get('lint', {}).get('node_budget', {}).get(col, {})
         if bud and n > bud.get('p90', 99): self.add('warn', 'density.nodes', f'{n} labelled boxes exceed the {col}-column p90 budget {bud["p90"]}; merge or split the figure')
         elif bud and n > bud.get('q3', 99): self.add('info', 'density.nodes', f'{n} labelled boxes is above the {col}-column q3 budget {bud["q3"]}')
@@ -657,7 +800,7 @@ class Lint:
         def panel_of(g):
             a = self.groups[g].get('attrs') or {}
             return a.get('data-panel') or (g.split('@', 1)[1] if '@' in g else None)
-        boxes = {g: self.shape_of(g) for k in ('node', 'container', 'lane') for g in self.by_kind.get(k, {})}
+        boxes = {g: (self.frame_of(g) if k == 'lane' else self.shape_of(g)) for k in ('node', 'container', 'lane') for g in self.by_kind.get(k, {})}
         spec_panel = {}
         for arr, pre in (('nodes', 'n:'), ('containers', 'c:'), ('lanes', 'l:'), ('annotations', 'a:')):
             for x in spec.get(arr) or []:
@@ -667,20 +810,28 @@ class Lint:
             if pid and pid in pbox and not inside(b, pbox[pid], -0.5):
                 self.add('warn', 'panel.member', f'{g} belongs to panel {pid} but is drawn outside p:{pid}', [g, f'p:{pid}'], b)
         ft = ((spec.get('meta') or {}).get('mechanism') or {}).get('frame_template')
-        if len(pbox) >= 2:
+        # panels that repeat one template: siblings under the same parent (top level: no parent) that are not the parts
+        # of a composite figure. Template elements of a sibling group are the nodes declared on its parent panel (top
+        # level: the nodes without a panel).
+        sibs = {}
+        for q in panels:
+            if q['id'] in pbox and q.get('axis', 'alternatives') != 'part': sibs.setdefault(q.get('parent'), []).append(q['id'])
+        for par, members in sibs.items():
+            if len(members) < 2: continue
+            mbox = {pid: pbox[pid] for pid in members}
             for n in spec.get('nodes') or []:
-                if not isinstance(n, dict) or n.get('panel'): continue
+                if not isinstance(n, dict) or (n.get('panel') != par if par else n.get('panel')): continue
                 tid = f"n:{n['id']}"
-                cop = {panel_of(g): boxes[g] for g in boxes if self.base_id(g) == tid and panel_of(g) in pbox}
+                cop = {panel_of(g): boxes[g] for g in boxes if self.base_id(g) == tid and panel_of(g) in mbox}
                 if tid in boxes:
-                    for pid, pb in pbox.items():
+                    for pid, pb in mbox.items():
                         if inside(boxes[tid], pb, -0.5): cop.setdefault(pid, boxes[tid])
                 if not cop: continue
-                missing = [pid for pid in pbox if pid not in cop]
+                missing = [pid for pid in mbox if pid not in cop]
                 if missing:
                     self.add('info', 'panel.copy', f'template element {tid} has no copy in panel(s) {missing} -- fine when those panels leave it out on purpose', [tid])
                 if ft == 'identical' and len(cop) >= 2:
-                    offs = {pid: (b[0] - pbox[pid][0], b[1] - pbox[pid][1]) for pid, b in cop.items()}
+                    offs = {pid: (b[0] - mbox[pid][0], b[1] - mbox[pid][1]) for pid, b in cop.items()}
                     ref_pid, ref = next(iter(offs.items()))
                     for pid, o in offs.items():
                         if max(abs(o[0] - ref[0]), abs(o[1] - ref[1])) > 1.0:
@@ -708,7 +859,7 @@ class Lint:
     def run(self):
         for fn in (self.check_canvas, self.check_bleed, self.check_fonts, self.check_glyphs, self.check_text, self.check_overflow, self.check_overlap,
                    self.check_contain, self.check_align, self.check_centre, self.check_edges, self.check_heads, self.check_replicas, self.check_titles,
-                   self.check_images, self.check_colour, self.check_density, self.check_spec, self.check_mechanism):
+                   self.check_images, self.check_colour, self.check_style, self.check_density, self.check_spec, self.check_mechanism):
             try: fn()
             except Exception as ex:  # a failing check must not hide the others
                 self.add('info', 'lint.internal', f'{fn.__name__} failed: {ex!r}')
@@ -745,6 +896,16 @@ def main():
         mech = json.loads(MECH_THRESH.read_text(encoding='utf-8'))
         thr = dict(thr); thr['columns'] = mech.get('columns', thr.get('columns', {}))
         thr['lint'] = dict(thr.get('lint', {})); thr['lint']['node_budget'] = MECH_NODE_BUDGET
+    style = ((spec or {}).get('meta') or {}).get('style')
+    if style and style != 'corpus':                                      # named style: references/styles/<style>.json
+        sp = SKILL / 'references' / 'styles' / f'{style}.json'
+        if sp.exists():
+            sj = json.loads(sp.read_text(encoding='utf-8'))
+            thr = dict(thr); thr['style'] = sj
+            thr['lint'] = dict(thr.get('lint', {}))
+            if 'max_saturated_fills' in sj.get('lint', {}): thr['lint']['max_saturated_fills'] = sj['lint']['max_saturated_fills']
+        else:
+            print(f'lint: unknown style {style!r} (no {sp.relative_to(SKILL)}); linting with the default rules', file=sys.stderr)
     thr.setdefault('lint', {}).setdefault('node_budget', {'single': {'q3': 13, 'p90': 17}, 'double': {'q3': 20, 'p90': 24}})
     here = Path(a.svg).resolve().parent                                 # relative <image> links resolve against the SVG's folder
     data = K.measure(svg, base_dir=here)

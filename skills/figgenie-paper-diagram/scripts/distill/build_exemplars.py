@@ -36,7 +36,8 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 SKILL = HERE.parent.parent
 REPO = SKILL.parent
-EXTRACTED = REPO / "lab" / "extracted"
+CORPUS_ROOT = REPO / "lab"                     # --corpus-root replaces it
+EXTRACTED = CORPUS_ROOT / "extracted"
 INDEX_CSV = EXTRACTED / "corpus_index.csv"
 SEMANTICS = EXTRACTED / "corpus_semantics.jsonl"
 DEFAULT_SELECTION = {"architecture": HERE / "exemplar_selection.json", "mechanism": HERE / "exemplar_selection_mechanism.json"}
@@ -155,7 +156,8 @@ def mechanism_figure_dirs(out):
 
 def clean_tree(out, kind):
     """--clean: architecture removes everything except mechanism/ and mechanism-only figure dirs; mechanism removes
-    only mechanism/ and those figure dirs. A figure dir with kind == mechanism is mechanism-only by construction (a
+    only mechanism/ and those figure dirs. Trees built by other scripts are never touched: ai/ (build_ai_exemplars.py)
+    and styles/ (build_style_exemplars.py). A figure dir with kind == mechanism is mechanism-only by construction (a
     figure cannot be both kinds: the corpus record has exactly one kind)."""
     if not out.exists():
         return
@@ -166,7 +168,7 @@ def clean_tree(out, kind):
             shutil.rmtree(out / "figures" / name, ignore_errors=True)
         return
     for p in out.iterdir():
-        if p.name == "mechanism":
+        if p.name in ("mechanism", "ai", "styles"):
             continue
         if p.name == "figures":
             for d in p.iterdir():
@@ -177,13 +179,16 @@ def clean_tree(out, kind):
 
 
 def main():
+    global EXTRACTED, INDEX_CSV, SEMANTICS
     ap = argparse.ArgumentParser()
     ap.add_argument("--kind", choices=["architecture", "mechanism"], default="architecture")
+    ap.add_argument("--corpus-root", default=str(CORPUS_ROOT), help="corpus root: <root>/extracted/corpus_index.csv, corpus_semantics.jsonl and the figure files (default: the systems corpus, lab/)")
     ap.add_argument("--selection", help="default: exemplar_selection.json / exemplar_selection_mechanism.json by --kind")
     ap.add_argument("--out", default=str(DEFAULT_OUT))
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--clean", action="store_true", help="delete the existing exemplar tree of this kind first")
     a = ap.parse_args()
+    EXTRACTED = Path(a.corpus_root).resolve() / "extracted"; INDEX_CSV = EXTRACTED / "corpus_index.csv"; SEMANTICS = EXTRACTED / "corpus_semantics.jsonl"
     kind = a.kind
     slot_key, slot_list = SLOT_KEY[kind], SLOT_LIST[kind]
     order = TEMPLATE_ORDER if kind == "architecture" else GROUP_ORDER

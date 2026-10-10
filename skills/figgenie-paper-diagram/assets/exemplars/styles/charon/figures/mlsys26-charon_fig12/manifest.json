@@ -1,0 +1,47 @@
+{
+  "id": "mlsys26-charon_fig12",
+  "kind": "mechanism",
+  "paper_id": "mlsys26-charon",
+  "fig": "12",
+  "venue": "MLSys26",
+  "year": 2026,
+  "caption": "Figure 12: Illustration of zigzag attention and dynamic SP planning. Each request can adopt a different SP configuration: request 1 adopts SP4, and request 2 adopts SP2 with zigzag.",
+  "title": "Charon: A Unified and Fine-Grained Simulator for Large-Scale LLM Training and Inference",
+  "authors": "Mengtian Yang, Zhekun Zhang, Mingheng Wu, Jianwen Yan, Hanshi Sun, Li-Wen Chang",
+  "arxiv": "2605.17164",
+  "style": "charon",
+  "origin": "style-reference",
+  "column": "single",
+  "aspect": 1.76,
+  "print_width_pt": 228,
+  "print_height_pt": 129.8,
+  "tool": "powerpoint",
+  "source_kind": "author",
+  "license": "arXiv non-exclusive distribution licence (http://arxiv.org/licenses/nonexclusive-distrib/1.0/); figures reproduced as a style reference with attribution, copyright stays with the authors",
+  "files": {
+    "source.svg": "author figure PDF converted to SVG (PyMuPDF, text kept as <text>), author units",
+    "preview.png": "the author figure at its printed width, 300 dpi",
+    "print.png": "the author figure at its printed width, 110 dpi",
+    "semantics.json": "hand-written semantic record",
+    "manifest.json": "this file"
+  },
+  "original_paths": {
+    "source.svg": "external-styles/charon/figs/dynamic_sp.pdf"
+  },
+  "groups": [
+    {
+      "group": "comparison",
+      "star": true,
+      "why_chosen": "Per-rank operator timelines without and with dynamic SP, coloured by request (blue shades = request 1, red = request 2), ending in a dashed deadline line and a 'Saved Time' double arrow.",
+      "what_to_learn": "Colour the work by whom it belongs to, not by operator; split a bar's fill when one operator serves two requests; mark the gain as a dashed vertical finish line plus a labelled double-headed arrow.",
+      "note_source": "hand"
+    },
+    {
+      "group": "anatomy",
+      "star": false,
+      "why_chosen": "Panel (a) explains zigzag attention as KV chunk strips and causal-mask triangles per rank, with circled chunk numbers and a shade ramp.",
+      "what_to_learn": "Number chunks with circled digits and give each chunk one step of a single-hue shade ramp so the reader can follow it from the strip into the mask cells.",
+      "note_source": "hand"
+    }
+  ]
+}

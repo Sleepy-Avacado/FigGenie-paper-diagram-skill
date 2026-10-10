@@ -101,7 +101,9 @@ def main():
     ap.add_argument("--selection", default=str(HERE / "exemplar_selection.json"))
     ap.add_argument("--type-discovery", default=str(HERE / "type_discovery.json"))
     ap.add_argument("--quota", default="30,25,30", help="pool>=100, 50-99, <50 caps")
+    ap.add_argument("--corpus-root", default=str(REPO / "lab"), help="corpus root (<root>/extracted/...); default: the systems corpus under lab/")
     a = ap.parse_args()
+    LS.set_corpus_root(a.corpus_root)
     q_big, q_mid, q_small = [int(x) for x in a.quota.split(",")]
     recs = LS.load()
     byid = {fid(r): r for r in recs}

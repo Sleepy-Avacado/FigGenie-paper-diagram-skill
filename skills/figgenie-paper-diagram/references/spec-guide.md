@@ -108,7 +108,8 @@ Four rules that decide most arguments:
 - **Palette** — pick by `when_to_use` in [`palettes.json`](palettes.json). Shortcuts:
   `blue-orange` for a whole-system overview, `grey-scaffold` when the paper extends someone else's
   system, `warm-bands` when the *regions* are the message, `amber-highlight` for baseline-vs-ours,
-  `greyscale` for print-first, `multi-hue-categorical` only with a legend. Then decide the **ground**: the
+  `greyscale` for print-first, `multi-hue-categorical` only with a legend; a named-style palette (`charon`) only
+  together with `meta.style` of the same id. Then decide the **ground**: the
   `*-outline` twins (`blue-outline`, `ink-outline`, `pastel-outline`, `green-outline`, `greyscale-outline`,
   `categorical-outline`) draw containers as outlines with no fill — the corpus norm (49%) and the right choice
   with nesting ≥ 2; `blue-ground` / `cream-ground` / `green-ground` tint one dominant region, `pastel-regions`
@@ -181,6 +182,26 @@ What the step-6 linter checks, and what makes a user's later edits round-trippab
   `data-symbol` off.** `nodes[].symbol` may hold a free-text description instead of a library name.
 - Helper shapes *inside* a group need no ids; nothing outside these groups should carry one.
 
+**Placing labels, drawing to scale, labels beside their box**
+
+- **Where a label goes.** `python3 scripts/place_text.py --font <key> --size 6.5 center --box x,y,w,h "Label"` prints
+  the `<text>` with its baseline: the label's glyph ink (tallest glyph to lowest descender, read from the font) is
+  centred on the box, the same model the linter checks with, so `centre.*` and `text.padding` agree with it. Add
+  `--rotate -90` for a label turned up a narrow bar (it centres the label across the bar), `\n` for two lines.
+  `place_text.py ... line --at x,baseline @badge:1 "text"` lays out a sentence or a legend entry with an inline
+  step disc (`<g data-symbol="badge">`, whose digit may go 1 pt below the type floor like a step badge's). When a
+  script generates the SVG (a `make_fig.py` that writes every box), import the same code instead of running the
+  CLI per label: `from place_text import place, svg_text` (with `scripts/` on `sys.path`) — `place(text, (x, y, w,
+  h), size, font, bold, rotate)` returns the baseline, the `rotate()` transform and whether the box leaves 1.5 pt;
+  `_svgkit.ink_band(text, size, font, bold)` gives the ink above / below the baseline. Write `y` as the alphabetic
+  baseline; a `dominant-baseline` other than `auto` is measured correctly but is harder to edit by hand.
+- **`data-scale="data"`** on a group (a `p:` panel, a container, a node) whose geometry comes from numbers — bar
+  lengths, Gantt rows, positions on a value axis. Two bars of 1,760 and 1,712 differ by a fraction of a point
+  on purpose, so the linter gives no snapping advice (`align.*`) inside it; every other check still runs.
+- **`data-label="outside"`** on a node group, or on one `<text>` of it: that label sits beside its box on
+  purpose — a total at the end of a bar, a value next to a cell too narrow to hold it. `text.overflow` then only
+  requires it to be wholly clear of the box, and the centring check leaves it out.
+
 **Bitmaps**
 
 Use a bitmap wherever the figure needs one — a sample input or output, a photo, a screenshot, a rendered
@@ -243,6 +264,7 @@ spec — the linter compares the two.
 | 主路径不清楚 | `edges[].weight`, `steps[]`, `meta.step_markers` | one contiguous `main` chain; 3–8 circled steps; list them in the caption |
 | 改成双栏 | `meta.column`, `width_pt` 504, `max_height_pt` ~168 | also revisit `direction` (double column is a strip → left-right) and the `grid` hints |
 | 换个配色 | `meta.palette` | only touch `style_overrides.palette_roles` if the user names hexes |
+| 换成某篇论文的风格（如 Charon 风格） | `meta.style`, `meta.palette`, `meta.font` | only a style listed in `references/styles/README.md`; read its card, then redraw — weight, outlines and framing change, layout does not |
 | 箭头太乱 | `edges[].route`, `from_side`/`to_side`, `route_hint`, `constraints[]` | orthogonal by default; feedback/bypass edges route along the opposite margin |
 | 这两个应该挨着 | `constraints[]` `same-row`/`same-column`, or a shared `parent` | |
 | 名字不对 / 术语要改 | `nodes[].label`, `meta.caption_draft` | labels are the paper's words, verbatim |
@@ -350,3 +372,46 @@ structure repeated in three panels is counted once.
 panels); "把变化的地方标红" → `meta.mechanism.delta_marking: colour`; "第 3 步不对" → the `steps[]` entry;
 "加一个 before" → a new panel with `axis: time`, order 0, and deltas on the others; "这个值要突出" →
 `values[].highlight`.
+
+---
+
+## 8. Composite figures: several kinds of drawing in one figure
+
+**When.** The user asks for one overview figure that holds unlike drawings — a structure, numbers drawn to
+scale, a timeline, a control loop — because together they tell one story (the "big Figure 2" of a paper: the
+background figure of the Charon style exemplars, `assets/exemplars/styles/charon/`). If the drawings share no
+component, they are two figures (`layouts.md`, composite-figure). The panels of a composite are not
+alternatives or frames of one template, so `panels[]` alone cannot describe them; parts can.
+
+**Spec.**
+- `meta.kind` is the kind of the main story: `mechanism` when the parts explain how one thing works and carry
+  values (most composites), `architecture` when a system overview dominates. Either kind may hold parts.
+- One `panels[]` entry per lettered part: `axis: "part"`, `view` (`structure`, `values`, `timeline`, `loop`,
+  `table`, `chart`, `other`), `panel_label: "(a)"`, `order` = reading order. `meta.panels` = number of parts.
+- Inside a part, alternatives or frames are ordinary panels with `parent: "<part>"` (the four placements of a
+  load chart, the two timelines). Nodes declared on the part (`panel: "<part>"`) are the template its sub-panels
+  repeat (`n:<id>@<sub-panel>` copies); a node of one sub-panel declares that sub-panel.
+- An element drawn in several parts — a step that appears in the structure *and* on the timeline — gets no
+  `panel`; draw its copies with the `@<panel>` suffix.
+- SVG: one `<g id="p:<part>" data-kind="panel">` per part, wrapping its sub-panels' `p:` groups; mark what is
+  drawn to scale with `data-scale="data"` (the part, or just its scaled sub-panels).
+
+**Reading across the parts.** One numbering for the whole figure (①… for steps that recur in several parts),
+one legend, the same identity colour for the same thing in every part (the hot item is the same pink in the
+structure, the chart and the timeline). Give what the parts share the same geometry: lanes of the same actors
+in the same order and row height in parts that sit above each other, so the eye can run straight across.
+Titles with letters under each part; parts in reading order (left → right, top → bottom); 8–12 pt gutters and no
+connectors between parts, except the leader of a zoom.
+
+**Budgets.** Each part is held to the single-column budget (§6; label-distinct in a mechanism figure); the
+figure's total is reported, not judged. Double column at 504 pt, height up to the double-column soft max
+(313 pt).
+
+**When it does not fit and the user still wants one figure** — work down this list before proposing a split:
+1. Draw what every lane does identically once: one tall box across the lanes (Attention on every GPU), or `×N`.
+2. Take words out of boxes: a title and at most one line per box; rules, conditions and parameter lists go to
+   the caption, labels on arrows only where the reader cannot do without them.
+3. Put numbers in one values part (a small to-scale chart) or the caption, not in every box.
+4. Collapse empty structure (spare slots, placeholders) into one dashed outline with a count.
+5. Grow the figure taller rather than the type smaller: 6 pt stays the floor.
+6. Only then propose two figures, cut where each keeps its own story (overview + detail, structure + numbers).

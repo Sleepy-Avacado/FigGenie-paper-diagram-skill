@@ -180,6 +180,14 @@
      "default": "whole-system",
      "description": "What the figure depicts; drives template choice and numbering rate (layouts.md `depicts`). Maps to the corpus vocabulary: whole-system='whole-system architecture', subsystem='one subsystem', request-path='one path/request flow', comparison, deployment. request-path figures are numbered 52% of the time, deployment 0%. mechanism = meta.kind is mechanism; the depicted scope is then given by meta.mechanism.group and base."
     },
+    "style": {
+     "enum": [
+      "corpus",
+      "charon"
+     ],
+     "default": "corpus",
+     "description": "Named style. 'corpus' (default) = the house rules distilled from the rated corpus. Any other value is one paper's look the user asked for, described in references/styles/<style>.md (with references/styles/<style>.json read by lint.py / spec_validate.py): it changes weight, outlines, fill roles and framing, never the print floors (type >= 6 pt, canvas, contrast). Set it only when the user asks for that style; pair it with the matching palette (meta.palette = 'charon')."
+    },
     "venue_style": {
      "enum": [
       "acm",
@@ -274,8 +282,8 @@
      "type": "integer",
      "default": 1,
      "minimum": 1,
-     "maximum": 4,
-     "description": "Number of sub-figure panels. 80% of the corpus is single-frame; >=3 panels is a recorded weakness. Declare each panel as a container with kind='panel'."
+     "maximum": 8,
+     "description": "Number of lettered sub-figure panels ((a), (b), ...); sub-panels inside a part do not count. 80% of the corpus is single-frame; >= 3 panels is a recorded weakness unless the figure is a composite the user asked for (panels[] with axis part, spec-guide §8), whose parts are budgeted one by one. Declare each panel as a container with kind='panel' or, in a mechanism or composite figure, as a panels[] entry."
     },
     "palette": {
      "enum": [
@@ -300,6 +308,7 @@
       "cream-ground",
       "categorical-outline",
       "green-ground",
+      "charon",
       "custom"
      ],
      "default": "blue-orange",
@@ -1256,7 +1265,7 @@
     },
     "anchor": {
      "$ref": "#/$defs/ref",
-     "description": "Node, edge, container or lane id this annotation is about. Omit only for a free-floating label, which then needs no leader."
+     "description": "Node, edge, container, lane or panel id this annotation is about (a panel: a verdict or a total that belongs to the whole panel or part). Omit only for a free-floating label, which then needs no leader."
     },
     "leader": {
      "type": "boolean",
@@ -1569,7 +1578,7 @@
    "required": [
     "id"
    ],
-   "description": "One panel or frame of a multi-panel mechanism figure (meta.kind mechanism). Elements say which panel they belong to with their `panel` field; an element without `panel` in a multi-panel figure is part of the shared template and is drawn in every panel unless a delta removes it there.",
+   "description": "One panel or frame of a multi-panel mechanism figure (meta.kind mechanism). Elements say which panel they belong to with their `panel` field; an element without `panel` in a multi-panel figure is part of the shared template and is drawn in every panel unless a delta removes it there. In a composite figure the top-level panels are its lettered parts (axis part) and a part's sub-panels name it as their parent.",
    "properties": {
     "id": {
      "type": "string",
@@ -1590,10 +1599,28 @@
      "enum": [
       "alternatives",
       "time",
-      "zoom"
+      "zoom",
+      "part"
      ],
      "default": "alternatives",
-     "description": "What the panels vary along: alternatives = designs / policies / cases compared (comparison); time = successive states of one instance (evolution); zoom = a magnified region of another panel."
+     "description": "What the panels vary along: alternatives = designs / policies / cases compared (comparison); time = successive states of one instance (evolution); zoom = a magnified region of another panel; part = one lettered part of a composite figure (a structure, a table of values, a timeline, a control loop ... shown side by side because they tell one story) -- a part repeats no template, may hold its own sub-panels (their `parent` names it) and is held to its own box budget (spec-guide §8)."
+    },
+    "view": {
+     "enum": [
+      "structure",
+      "values",
+      "timeline",
+      "loop",
+      "table",
+      "chart",
+      "other"
+     ],
+     "default": "structure",
+     "description": "For a part (axis part): what kind of drawing it holds -- structure = boxes and arrows (an architecture or a component opened up), values = numbers drawn to scale or written in place (loads, sizes, a worked example), timeline = lanes over time, loop = a control cycle, table = a grid of cells, chart = a small plot that belongs to the argument. Tells the drawer which part's conventions apply (layouts.md, mechanism/layouts.md) and the linter which parts are drawn to scale."
+    },
+    "parent": {
+     "$ref": "#/$defs/ref",
+     "description": "The panel this one sits in: sub-panels of a part (e.g. the four alternatives of a 'values' part) name the part. Elements declared on the parent panel are the template the sub-panels repeat. Omit at the top level."
     },
     "order": {
      "type": "integer",

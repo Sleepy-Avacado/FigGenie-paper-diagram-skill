@@ -33,8 +33,10 @@ The AlphaSyndrome figure comes from the arXiv version of the paper, which carrie
 
 The skill also ships material taken from published papers, as style references for the drawing agent: 485 exemplar
 figures in [`assets/exemplars/figures/`](skills/figgenie-paper-diagram/assets/exemplars/figures/) and 2,764 parts in
-[`assets/symbols/`](skills/figgenie-paper-diagram/assets/symbols/) that were cut out of corpus figures. This material
-belongs to the papers' authors and publishers and is not covered by the MIT License.
+[`assets/symbols/`](skills/figgenie-paper-diagram/assets/symbols/) that were cut out of corpus figures, and the seven
+figures of the named style `charon` in [`assets/exemplars/styles/`](skills/figgenie-paper-diagram/assets/exemplars/styles/),
+from *Charon* (Yang et al., MLSys 2026). This material belongs to the papers' authors and publishers and is not covered
+by the MIT License.
 [SOURCES.md](SOURCES.md) lists every paper it comes from, with authors, venue and link, and the Creative Commons
 licence where the paper states one.
 
@@ -46,4 +48,4 @@ own open licenses; see [`LICENSES.md`](skills/figgenie-paper-diagram/assets/font
 ## Removal requests
 
 If you are an author of a figure used here and want it removed, email ahawkinthesky@outlook.com or open an issue at
-https://github.com/Sleepy-Avacado/FigGenie/issues. We will take it down.
+https://github.com/Sleepy-Avacado/FigGenie-paper-diagram-skill/issues. We will take it down.

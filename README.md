@@ -131,7 +131,7 @@ and measured what separates the good ones from the rest.
 Simply drop the URL of this repo into your AI agent and ask it to install the skill:
 
 ```text
-Install this skill and set up its dependencies: https://github.com/Sleepy-Avacado/FigGenie
+Install this skill and set up its dependencies: https://github.com/Sleepy-Avacado/FigGenie-paper-diagram-skill
 ```
 
 Or install it manually:
@@ -139,7 +139,7 @@ Or install it manually:
 **Claude Code**: install the plugin.
 
 ```text
-/plugin marketplace add Sleepy-Avacado/FigGenie
+/plugin marketplace add Sleepy-Avacado/FigGenie-paper-diagram-skill
 /plugin install figgenie@figgenie
 ```
 
@@ -147,9 +147,9 @@ Or install it manually:
 agent that loads skills, runs shell commands and can look at a PNG can use it.
 
 ```bash
-git clone https://github.com/Sleepy-Avacado/FigGenie.git
+git clone https://github.com/Sleepy-Avacado/FigGenie-paper-diagram-skill.git
 mkdir -p ~/.agents/skills
-ln -s "$PWD/FigGenie/skills/figgenie-paper-diagram" ~/.agents/skills/figgenie-paper-diagram
+ln -s "$PWD/FigGenie-paper-diagram-skill/skills/figgenie-paper-diagram" ~/.agents/skills/figgenie-paper-diagram
 ```
 
 Older Codex releases read skills from `~/.codex/skills` instead.
@@ -199,7 +199,8 @@ collage above is credited figure by figure in [CREDITS.md](CREDITS.md). Fonts: T
 Inter, Roboto, Arimo, Tinos, Carlito and DejaVu. Formulas: MathJax. Rendering: Playwright and Chromium.
 
 **Removal requests.** If you are an author of a figure used in this repository and want it removed, email
-ahawkinthesky@outlook.com or open an issue at https://github.com/Sleepy-Avacado/FigGenie/issues. We will take it down.
+ahawkinthesky@outlook.com or open an issue at
+https://github.com/Sleepy-Avacado/FigGenie-paper-diagram-skill/issues. We will take it down.
 
 ## License
 

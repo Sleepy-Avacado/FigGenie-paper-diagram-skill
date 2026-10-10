@@ -16,6 +16,8 @@
     "only": [12, 13, 15],               exact element ids (from --probe); bbox is then ignored
     "include": [40], "exclude": [41],   add / remove element ids after the bbox selection
     "bitmaps": true,                    keep embedded <image> bitmaps that fall in the box (default true)
+    "placeholder": false,               true = keep the bitmaps' places but replace each <image> by a grey box
+                                        (a frame for a sample picture, without the picture)
     "note": "..."}]
 
 Geometry is measured in Chromium (exact text and path boxes; hidden elements are ignored) and cached next to the
@@ -131,7 +133,7 @@ def select_measured(st, q, box):
             fr = el_frac_inside(bb, box)
             hit = (mode == 'touch' and fr > 0) or (mode != 'touch' and fr >= thr)
             if not hit: continue
-            if e['tag'] == 'image' and not want_bitmaps: n_img_skipped += 1; continue
+            if not want_bitmaps and image_target(st.anchors[e['i']], st.root) is not None: n_img_skipped += 1; continue
             if q.get('drop_text') and e['tag'] == 'text': continue
             if e['w'] * e['h'] > 3.0 * area and e['tag'] != 'text': continue
             keep.add(e['i'])
@@ -182,7 +184,8 @@ def cut_figure(fig_dir, reqs, out_root, render=True, quiet=False):
         bitmaps = []
         for i in sorted(keep):
             node = st.anchors[i]
-            if M.local(node) != 'image': continue
+            node = image_target(node, st.root)                 # a <use> of a stored <image> counts as a bitmap
+            if node is None: continue
             data = M.href_bytes(node)
             bitmaps.append({'idx': i, 'sha1': hashlib.sha1(data).hexdigest() if data else None,
                             'bbox_pt': st.to_pt((geom[i]['x'], geom[i]['y'], geom[i]['x'] + geom[i]['w'], geom[i]['y'] + geom[i]['h'])) if geom else None})
@@ -210,6 +213,8 @@ def cut_figure(fig_dir, reqs, out_root, render=True, quiet=False):
             gt = M.hidden_reference(st.root, keep, vb, prefix='gt-%s-' % name, clean=True)
         except Exception as exc:  # noqa: BLE001
             rec['warnings'].append('export failed: %s' % exc); continue
+        if q.get('placeholder') and bitmaps:
+            svg = placeholder_images(svg); rec['placeholder'] = True; rec['warnings'].append('%d bitmap(s) replaced by grey placeholders' % len(bitmaps))
         (out_dir / (name + '.svg')).write_text(svg, encoding='utf-8')
         rec['svg'] = str(out_dir / (name + '.svg')); items.append((name, svg))
         rec['svg_kb'] = round(len(svg) / 1024, 1)
@@ -222,7 +227,7 @@ def cut_figure(fig_dir, reqs, out_root, render=True, quiet=False):
         for r in records:
             if r['name'] in tiles:
                 tiles[r['name']].save(out_dir / (r['name'] + '.png')); r['png'] = str(out_dir / (r['name'] + '.png'))
-                if r['name'] not in gt_nt: r['fidelity_diff'] = None; continue
+                if r['name'] not in gt_nt or r.get('placeholder'): r['fidelity_diff'] = None; continue     # a placeholder cut differs by design
                 d = M.diff_ratio(cut_nt[r['name']], gt_nt[r['name']]); r['fidelity_diff'] = round(d, 4)
                 if d > FIDELITY_WARN: r['warnings'].append('export differs from source by %.0f%%' % (100 * d))
                 if r['name'] in gt_t:
@@ -237,6 +242,105 @@ def cut_figure(fig_dir, reqs, out_root, render=True, quiet=False):
                                                                          ('"' + r['texts'][:40] + '"') if r.get('texts') else ''))
         if items and render: print('verify sheet:', out_dir / 'verify.png')
     return records
+
+
+XLINK = '{http://www.w3.org/1999/xlink}href'
+
+
+def image_target(node, root):
+    """The <image> a drawable stands for: itself, or the stored <image> a <use href="#id"> places (PDF exports store
+    each bitmap once in <defs> and place it with <use>); None for anything else."""
+    t = M.local(node)
+    if t == 'image': return node
+    if t != 'use': return None
+    ref = (node.get(XLINK) or node.get('href') or '').lstrip('#')
+    if not ref: return None
+    hit = root.xpath('//*[@id=$i]', i=ref)
+    return hit[0] if hit and M.local(hit[0]) == 'image' else None
+
+
+def placeholder_images(svg):
+    """Replace every bitmap of a cut by a light-grey rectangle in the same place, so a sample-picture frame can be kept
+    as a part without the picture. Handles an <image> drawn directly and a <use> of a stored <image> (its x/y add a
+    translation after its transform; the size is the image's own width/height); stored images nothing references any
+    more are removed. Masks and clip paths of the ancestors stay as they are."""
+    from lxml import etree
+    doc = etree.fromstring(svg.encode('utf-8'), parser=etree.XMLParser(recover=True, huge_tree=True))
+    ns = 'http://www.w3.org/2000/svg'
+    resource = lambda el: any(M.local(a) in ('defs', 'mask', 'clipPath', 'pattern', 'symbol') for a in el.iterancestors())
+
+    def opaque_box(im):
+        """(x, y, w, h) of the bitmap's visible pixels in the image's own units: a transparent margin around an icon
+        must not become grey (it would cover the arrows drawn under it). Falls back to the whole image."""
+        x, y, w, h = (float(im.get(k) or 0) for k in ('x', 'y', 'width', 'height'))
+        try:
+            import io
+            from PIL import Image
+            data = M.href_bytes(im)
+            if not data: return x, y, w, h
+            pic = Image.open(io.BytesIO(data))
+            if pic.mode not in ('RGBA', 'LA', 'PA') and not (pic.mode == 'P' and 'transparency' in pic.info): return x, y, w, h
+            a = pic.convert('RGBA').getchannel('A').point(lambda v: 255 if v > 16 else 0)
+            bb = a.getbbox()
+            if not bb: return x, y, w, h
+            pw, ph = pic.size
+            return x + bb[0] / pw * w, y + bb[1] / ph * h, (bb[2] - bb[0]) / pw * w, (bb[3] - bb[1]) / ph * h
+        except Exception:  # noqa: BLE001
+            return x, y, w, h
+
+    def rect_for(im, extra_transform=None, attrs=None):
+        w, h = im.get('width'), im.get('height')
+        if not w or not h: return None
+        bx, by, bw, bh = opaque_box(im)
+        r = etree.Element('{%s}rect' % ns)
+        r.set('x', '%.3f' % bx); r.set('y', '%.3f' % by); r.set('width', '%.3f' % bw); r.set('height', '%.3f' % bh)
+        if im.get('transform'): r.set('transform', im.get('transform'))
+        r.set('fill', '#d9d9d9'); r.set('stroke', '#9a9a9a'); r.set('stroke-width', '0.4'); r.set('vector-effect', 'non-scaling-stroke')
+        r.set('data-placeholder', 'image')
+        if extra_transform is None: return r
+        g = etree.Element('{%s}g' % ns)
+        for k, v in (attrs or {}).items(): g.set(k, v)
+        g.set('transform', extra_transform); g.append(r); return g
+
+    n = 0
+    # <use> placements first: a stored image may also be drawn directly in the body, and replacing that copy first
+    # would leave its placements pointing at nothing (no picture and no grey box)
+    ids = {el.get('id'): el for el in doc.iter() if el.get('id')}
+    for u in list(doc.iter('{%s}use' % ns)):
+        if resource(u): continue
+        tgt = ids.get((u.get(XLINK) or u.get('href') or '').lstrip('#'))
+        if tgt is None or M.local(tgt) != 'image': continue
+        tr = ' '.join(x for x in (u.get('transform') or '', 'translate(%s,%s)' % (u.get('x') or '0', u.get('y') or '0')) if x)
+        attrs = {k: u.get(k) for k in ('clip-path', 'mask', 'opacity', 'style') if u.get(k)}
+        r = rect_for(tgt, tr, attrs)
+        if r is None: continue
+        u.getparent().replace(u, r); n += 1
+    for im in list(doc.iter('{%s}image' % ns)):
+        if resource(im): continue
+        r = rect_for(im)
+        if r is None: continue
+        for k in ('clip-path', 'mask', 'opacity', 'style'):
+            if im.get(k): r.set(k, im.get(k))
+        im.getparent().replace(im, r); n += 1
+    # a soft mask is the bitmap's own alpha (often a stock icon's silhouette): drop it from the placeholder and from
+    # ancestors that hold nothing but placeholders, so a placeholder stays a plain box
+    ph = [el for el in doc.iter() if el.get('data-placeholder') == 'image']
+    for el in ph:
+        el.attrib.pop('mask', None)
+        if el.getparent() is not None and M.local(el.getparent()) == 'g' and el.getparent().get('transform') and len(el.getparent()) == 1: el.getparent().attrib.pop('mask', None)
+        for anc in el.iterancestors():
+            if anc.get('mask') is None: continue
+            drawables = [d for d in anc.iter() if M.local(d) in M.ANCHORS]
+            if drawables and all(d.get('data-placeholder') == 'image' for d in drawables): anc.attrib.pop('mask', None)
+    # drop the masks and stored bitmaps nothing references any more (repeat: a removed mask frees its images)
+    for _ in range(4):
+        text = etree.tostring(doc, encoding='unicode'); gone = 0
+        for el in [el for el in doc.iter() if el.get('id') and M.local(el) in ('mask', 'image') and (M.local(el) == 'mask' or resource(el))]:
+            i = el.get('id')
+            if ('#' + i + '"') in text or ("#" + i + "'") in text or ('#' + i + ')') in text: continue
+            if el.getparent() is not None: el.getparent().remove(el); gone += 1
+        if not gone: break
+    return etree.tostring(doc, encoding='unicode')
 
 
 def verify_sheet(records, imgs, out_png, title):
@@ -311,10 +415,11 @@ def main():
     ap.add_argument('--fig', required=True); ap.add_argument('--requests'); ap.add_argument('--out', required=True)
     ap.add_argument('--probe', nargs=4, type=float, metavar=('X0', 'Y0', 'X1', 'Y1'))
     ap.add_argument('--file', type=int, default=0, help='source file index for --probe')
+    ap.add_argument('--limit', type=int, default=400, help='--probe: list at most this many elements (default 400)')
     ap.add_argument('--no-render', action='store_true')
     a = ap.parse_args()
     if a.probe:
-        return probe(a.fig, a.file, a.probe, a.out)
+        return probe(a.fig, a.file, a.probe, a.out, limit=a.limit)
     if not a.requests: ap.error('--requests is required unless --probe is given')
     reqs = json.loads(Path(a.requests).read_text(encoding='utf-8'))
     if isinstance(reqs, dict): reqs = reqs.get('requests') or reqs.get('cuts') or []

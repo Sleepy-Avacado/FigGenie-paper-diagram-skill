@@ -274,8 +274,8 @@ def representative(members, recs, X, corpus_hex, transparent):
 
 
 def png_of(r):
-    cands = [f"lab/extracted/{r['paper_id']}/{x.replace('.svg', '.png')}" for x in (r["src_svgs"] or "").split("|") if x]
-    cands.append(f"lab/extracted/{r['paper_id']}/{(r['pdf_svg'] or '').replace('.svg', '.png')}")
+    cands = [pc.rel_png(r['paper_id'], x) for x in (r["src_svgs"] or "").split("|") if x]
+    cands.append(pc.rel_png(r['paper_id'], r['pdf_svg'] or ''))
     return next((x for x in cands if os.path.exists(os.path.join(pc.REPO_ROOT, x))), cands[0])
 
 
@@ -362,6 +362,7 @@ def main():
     ap.add_argument("--append-to", default=None, help="palettes.json to extend (existing entries untouched)")
     ap.add_argument("--subtype", default="architecture", help="diagram subtype (architecture or mechanism)")
     a = ap.parse_args()
+    pc.set_extracted_dir(os.path.dirname(os.path.abspath(a.index)))
     os.makedirs(a.out, exist_ok=True)
 
     recs = load_recs(a.semantics, a.index, a.subtype)

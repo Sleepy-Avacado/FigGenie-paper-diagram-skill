@@ -1,0 +1,531 @@
+{
+ "style": "charon",
+ "paper": {
+  "paper_id": "mlsys26-charon",
+  "title": "Charon: A Unified and Fine-Grained Simulator for Large-Scale LLM Training and Inference",
+  "authors": "Mengtian Yang, Zhekun Zhang, Mingheng Wu, Jianwen Yan, Hanshi Sun, Li-Wen Chang",
+  "venue": "MLSys26",
+  "year": 2026,
+  "arxiv": "2605.17164",
+  "license": "arXiv non-exclusive distribution licence (http://arxiv.org/licenses/nonexclusive-distrib/1.0/); figures reproduced as a style reference with attribution, copyright stays with the authors",
+  "column_pt": 228,
+  "textwidth_pt": 470,
+  "source_dir": "external-styles/charon",
+  "note": "Added on user request (2026-10-09) as the reference for the named style 'charon'. Not part of the rated corpus: no aesthetic label, no corpus statistics are derived from it. Author figures are PowerPoint exports (Quartz PDFContext), so source.svg is the author PDF converted with text kept as <text>."
+ },
+ "figures": [
+  {
+   "id": "mlsys26-charon_fig1",
+   "fig": "1",
+   "file": "figs/fig_hooker.pdf",
+   "kind": "architecture",
+   "print_width_pt": 221,
+   "section": "1 Introduction",
+   "caption": "Figure 1: Charon enables end-to-end, operator-level simulation for LLM training and inference. It delivers more than 30k cost reduction compared with cluster profiling for large-scale experiment, with only 3.74% total training time error on a large-scale training task.",
+   "slots": [
+    {"template": "composite-figure", "star": true,
+     "why_chosen": "Charon-style teaser: left half is the system as a stacked platform card fed by framework logos, right half two boxed result cards (cost, accuracy) that carry the claim in numbers.",
+     "what_to_learn": "Say the contribution three times in one column: a red 'old way' arrow versus a green 'with us' label over the same input/output, a grey platform card holding three full-width pastel capability bars, and two black-framed side cards with one number each in the same red/green."}
+   ],
+   "semantics": {
+    "system": {"name": "Charon", "one_liner": "a unified, operator-level simulator that predicts LLM training and inference performance so configurations can be explored without cluster profiling", "domain": ["ml-systems", "llm-training", "llm-inference", "performance-simulation"], "abstraction": "ml-system"},
+    "content": {
+     "depicts": "whole-system architecture",
+     "components": [
+      {"name": "Native Models", "role": "input: Hugging Face / PyTorch / vLLM models, drawn as their logos", "container": null, "novel": false},
+      {"name": "GPU cluster", "role": "stacked GPU-card icons standing for running the training / inference workload on real hardware", "container": null, "novel": false},
+      {"name": "Workload outcome", "role": "bullet list: Best Config, Expected Perf, Exec Timeline", "container": null, "novel": false},
+      {"name": "Charon Simulation Platform", "role": "grey rounded platform card holding the three capabilities", "container": null, "novel": true},
+      {"name": "Graph-based Operator-level Simulation", "role": "capability bar (pink)", "container": "Charon Simulation Platform", "novel": true},
+      {"name": "Different Computation Card Adoption", "role": "capability bar (blue)", "container": "Charon Simulation Platform", "novel": true},
+      {"name": "Cluster Topology-aware Communication", "role": "capability bar (mint)", "container": "Charon Simulation Platform", "novel": true},
+      {"name": "Cost Per Evaluation", "role": "side card: $1k per profiling run vs a few cents with Charon, >30k x saving", "container": null, "novel": false},
+      {"name": "Evaluation Accuracy", "role": "side card: two-bar mini chart, profile = 1, Charon -3.74%", "container": null, "novel": false}
+     ],
+     "flows": [
+      {"from": "Native Models", "to": "GPU cluster", "what": "profiling-based tuning (red label): the expensive old way", "step": null},
+      {"from": "Native Models", "to": "Charon Simulation Platform", "what": "design exploration with Charon (green label)", "step": null},
+      {"from": "Charon Simulation Platform", "to": "Workload outcome", "what": "the same outputs, obtained by simulation", "step": null}
+     ],
+     "key_idea": "Charon replaces profiling-based tuning on a GPU cluster with operator-level simulation that gives the same outputs at a 30,000x lower cost and a 3.74% error.",
+     "reading_order": "Top-left logos -> red 'Profiling-based Tuning' arrow to GPU stacks and outcomes, OR down into the grey Charon platform and back up through the green 'Design Exploration w/ Charon' label; then the two cards on the right: cost, then accuracy."
+    },
+    "layout": {"template": "other", "direction": "mixed", "nesting_depth": 2, "lanes": false, "legend": "none", "step_markers": "none", "panels": 3, "column": "single", "aspect": 2.04, "text_density": "dense"},
+    "style": {
+     "palette": [
+      {"hex": "#d9d9d9", "used_for": "platform card ground"},
+      {"hex": "#ffc9c3", "used_for": "capability bar: graph-based operator-level simulation"},
+      {"hex": "#cddfff", "used_for": "capability bar: computation-card adoption"},
+      {"hex": "#b9d9cd", "used_for": "capability bar: topology-aware communication"},
+      {"hex": "#ff7e79", "used_for": "Profile bar in the accuracy chart"},
+      {"hex": "#6bb097", "used_for": "Charon bar in the accuracy chart"},
+      {"hex": "#c00000", "used_for": "text: the old way and its cost ($1k, Profile, Profiling-based Tuning)"},
+      {"hex": "#178d6a", "used_for": "text: Charon and its result (Few cents, -3.74%, Design Exploration w/ Charon)"},
+      {"hex": "#042433", "used_for": "outlines of every box"}
+     ],
+     "background": "white",
+     "fill": "flat",
+     "stroke": "dark ink (#042433) ~0.65 pt outline on every box; black 1.3 pt frames around the two result cards",
+     "font": "Calibri Bold throughout (Aptos Bold for titles), 6-7 pt at print size",
+     "corners": "rounded",
+     "arrows": "short thick straight black arrows with solid heads",
+     "icons": "Hugging Face, PyTorch and vLLM logos; GPU-card stacks; money and coin glyphs"
+    },
+    "encoding": {
+     "color_means": "red = profiling / the expensive baseline, green = Charon / the result; the three pastel bars are one colour per capability and reappear in the later figures (pink graph, blue compute, mint communication)",
+     "line_style_means": "all lines solid; arrows only for the two alternative routes",
+     "emphasis": "coloured bold text for the two competing routes and for the headline numbers; a black frame singles out each result card",
+     "reusable_patterns": ["teaser split: system-as-platform-card on the left, two framed one-number result cards on the right", "old-way vs our-way arrows into the same outputs, labelled in red and green text instead of being drawn twice", "capability list as full-width pastel bars inside a grey platform card"],
+     "weaknesses": ["at print size (221 pt wide) the capability bars and card titles print at about 6 pt; the bitmap logos are the only non-text identity cue for the input"]
+    },
+    "tags": ["llm simulation", "performance prediction", "teaser", "cost saving", "profiling vs simulation"],
+    "provenance": {"sections": ["1 Introduction"], "evidence": ["enables end-to-end, operator-level simulation for LLM training and inference", "more than 30k cost reduction compared with cluster profiling"]},
+    "summary": "The teaser contrasts two ways to find a good training or inference configuration for a native model: profiling-based tuning on a real GPU cluster (red route, $1k per evaluation) and design exploration with the Charon simulation platform (green route, a few cents). The platform is a grey rounded card listing three capabilities as full-width pastel bars; two framed cards on the right state the cost saving (>30k x) and the accuracy (-3.74% versus profiling).",
+    "summary_zh": "引言配图：左边是同一个模型的两条调参路线，红色是上集群实测（每次约 1000 美元），绿色是用 Charon 仿真；Charon 画成灰色圆角平台卡，里面三条通栏浅色条列出三项能力。右边两张黑框小卡分别给出成本（省 3 万倍以上）和精度（误差 3.74%）。",
+    "confidence": "high",
+    "notes": "Style reference for the named style 'charon' (references/styles/charon.md); not a rated corpus figure."
+   }
+  },
+  {
+   "id": "mlsys26-charon_fig2",
+   "fig": "2",
+   "file": "figs/fig_bg.pdf",
+   "kind": "architecture",
+   "print_width_pt": 228,
+   "section": "2 Background and Motivation",
+   "caption": "Figure 2: LLM architecture, execution workflows, and tuning challenges: (a) Decoder-only Transformer stack with QKV attention and optional MoE in the feed-forward layers. (b) Training (forward, backward, update) and inference (prefill, decode with KV cache) workflows alongside key parallelism schemes. (c) Iterative profiling-based tuning loop and its GPU-hour/design-space explosion on large GPU clusters.",
+   "slots": [
+    {"template": "composite-figure", "star": true,
+     "why_chosen": "A whole background section in one tall single-column figure: three black-framed bands (a)-(c), each split by a dash-dot rule into a diagram and its companion (zoomed block, parallelism catalogue, motivation chart).",
+     "what_to_learn": "Frame each panel with one thick black rectangle and a bold (a)/(b)/(c) in its top-left corner, split a panel with a dash-dot vertical rule, and keep one fill per concept across panels (blue = transformer block / forward, pink = backward / K / layer, peach = output / V, mint = norm / expected)."},
+    {"template": "overview-with-inset", "star": false,
+     "why_chosen": "Panel (a) zooms one Transformer block of a grey/blue layer stack into a pale-blue detail box with two converging guide lines.",
+     "what_to_learn": "Draw the zoom as two straight lines from the selected stack box to the corners of a tinted detail box; inside it, rotated tall bars (Norm Layer) act as section dividers."}
+   ],
+   "semantics": {
+    "system": {"name": "Charon", "one_liner": "background on LLMs, their training / inference workflows, parallelism strategies, and the cost of profiling-based tuning", "domain": ["ml-systems", "llm-training", "llm-inference", "parallelism"], "abstraction": "ml-system"},
+    "content": {
+     "depicts": "comparison",
+     "components": [
+      {"name": "Embedding Layer / Transformer Block 1..N / LM Head Layer", "role": "(a) decoder-only stack: grey ends, blue blocks", "container": "(a)", "novel": false},
+      {"name": "Transformer block detail", "role": "(a) zoom: Norm Layer, Q/K/V generation, multi-head vs grouped-query attention, residual adds, feed-forward / MoE", "container": "(a)", "novel": false},
+      {"name": "Training Steps", "role": "(b) forward (blue), backward (red), update (green) around weight / error / gradient columns and an optimizer", "container": "(b)", "novel": false},
+      {"name": "Inference / Serving Steps", "role": "(b) input sequence -> prefill stage -> decode stage -> output sequence with a KV cache bar", "container": "(b)", "novel": false},
+      {"name": "Parallelism Strategies", "role": "(b) TP, DP, EP, PP, SP, each a mini diagram over GPU1/GPU2 card icons", "container": "(b)", "novel": false},
+      {"name": "Profiling-based Tuning Flow", "role": "(c) initial configuration -> cluster-level profiling experiments with engineers in the loop -> optimized configuration", "container": "(c)", "novel": false},
+      {"name": "Tuning cost chart", "role": "(c) GPU hours (bars) and design-space size (line) growing with GPU types and parallelism choices", "container": "(c)", "novel": false}
+     ],
+     "flows": [
+      {"from": "Embedding Layer", "to": "LM Head Layer", "what": "forward through the stack", "step": null},
+      {"from": "Input Sequence", "to": "Output", "what": "forward pass (1)", "step": 1},
+      {"from": "Expected", "to": "Weight", "what": "backward pass (2)", "step": 2},
+      {"from": "Optimizer", "to": "Weight", "what": "update (3)", "step": 3},
+      {"from": "Prefill Stage", "to": "Decode Stage", "what": "inference stages sharing the KV cache", "step": null}
+     ],
+     "key_idea": "LLM execution has many parallelism knobs, so profiling-based tuning on a large cluster explodes in GPU hours and design-space size.",
+     "reading_order": "(a) top: stack on the left, zoom to the block on the right; (b) middle: training and inference steps on the left, the parallelism catalogue on the right; (c) bottom: the tuning loop on the left, its cost chart on the right."
+    },
+    "layout": {"template": "other", "direction": "top-down", "nesting_depth": 3, "lanes": false, "legend": "inside", "step_markers": "circled-numbers", "panels": 3, "column": "single", "aspect": 0.8, "text_density": "dense"},
+    "style": {
+     "palette": [
+      {"hex": "#d9d9d9", "used_for": "embedding / LM head / KV cache / initial configuration boxes"},
+      {"hex": "#cddfff", "used_for": "transformer blocks, prefill / decode stages, forward weights"},
+      {"hex": "#fcafaa", "used_for": "key generation, backward error, pipeline layer 1, profiling experiments"},
+      {"hex": "#ffecd6", "used_for": "value generation, output, pipeline layer 2"},
+      {"hex": "#d0e4e2", "used_for": "norm layers, expected output, input sequence, optimized configuration"},
+      {"hex": "#e8f0fb", "used_for": "zoomed transformer-block ground"},
+      {"hex": "#315ab4", "used_for": "forward step text and GPU-hour bars"},
+      {"hex": "#c25160", "used_for": "backward step text"},
+      {"hex": "#068c79", "used_for": "update step text"},
+      {"hex": "#042433", "used_for": "outlines"}
+     ],
+     "background": "white",
+     "fill": "flat",
+     "stroke": "dark ink ~0.65 pt on boxes; black ~1.3 pt panel frames; dash-dot dividers inside panels; dotted outlines for omitted / optional parts (grouped-query copies, inactive expert)",
+     "font": "Calibri Bold throughout, rotated labels on tall bars, about 5-6 pt at print size",
+     "corners": "rounded",
+     "arrows": "short black arrows; coloured arrows only for forward (blue), backward (red), update (green)",
+     "icons": "GPU-card outlines, people icon, circular update arrow"
+    },
+    "encoding": {
+     "color_means": "one fill per concept reused across panels; step colours (blue forward, red backward, green update) repeated in text, arrows and the circled step labels",
+     "line_style_means": "dotted outlines = optional or replicated parts; dash-dot = panel subdivision",
+     "emphasis": "thick black frames and bold panel letters structure the figure; no single accent",
+     "reusable_patterns": ["tall background figure as three framed bands, each split by a dash-dot rule into diagram + companion", "parallelism catalogue: one mini diagram per strategy over the same two GPU-card icons", "rotated text inside tall bars as stage dividers and as input/output bookends"],
+     "weaknesses": ["at 228 pt wide the parallelism labels print at about 5 pt, below the 6 pt floor", "panel (c) mixes a data chart into the diagram"]
+    },
+    "tags": ["transformer", "mixture of experts", "parallelism strategies", "tensor parallel", "pipeline parallel", "training workflow", "prefill decode", "tuning cost"],
+    "provenance": {"sections": ["2 Background and Motivation"], "evidence": ["Modern LLMs are based on a decoder-only transformer architecture", "shows the most widely used parallelism strategies", "conventional tuning workflow typically follows an iterative profile-analyze-tune way"]},
+    "summary": "A three-band background figure. (a) A decoder-only stack whose Transformer block is zoomed into norm, Q/K/V generation, multi-head and grouped-query attention, residual adds and a feed-forward / MoE layer. (b) Training (forward, backward, update) and inference (prefill, decode, KV cache) steps beside a catalogue of TP, DP, EP, PP and SP mini diagrams over two GPU cards. (c) The profiling-based tuning loop beside a chart of GPU hours and design-space size growing with each added choice.",
+    "summary_zh": "背景图，三个粗黑框面板竖排：(a) 解码器堆栈，放大其中一个 Transformer 块；(b) 训练和推理的步骤，旁边是五种并行策略的小图；(c) 实测调参的循环和它的成本曲线。",
+    "confidence": "high",
+    "notes": "Style reference for the named style 'charon'; printed in a single column, so its smallest labels fall below 6 pt -- copy the structure, not the type size."
+   }
+  },
+  {
+   "id": "mlsys26-charon_fig3",
+   "fig": "3",
+   "file": "figs/fig_arch_overview.pdf",
+   "kind": "architecture",
+   "print_width_pt": 470,
+   "section": "3.1 Architecture Overview",
+   "caption": "Figure 3: Architecture overview of proposed Charon simulator. The system consists of a graph-based frontend that constructs forward and backward computation graphs while applying optimizations and analyses; a multi-engine backend that accurately simulates both computation and communication operators; and a design explorer that searches for the optimal configuration through guided pruning.",
+   "slots": [
+    {"template": "flanked-core", "star": true,
+     "why_chosen": "The canonical Charon-style overview: inputs on the left, the platform as one big rounded frame with three equal subsystem boxes, outputs on the right, the whole thing inside a thick black outer frame.",
+     "what_to_learn": "Title each flank and each subsystem with bold text, put the subsystem name at the bottom of its box, open each subsystem with a grey header bar, and fill only the leaves with the role colours (blue / peach / mint / pink); tiny glyphs (node-link graphs, timeline bars, a pruned tree) stand in for what each stage produces."}
+   ],
+   "semantics": {
+    "system": {"name": "Charon", "one_liner": "a unified, operator-level simulator that predicts LLM training and inference performance so configurations can be explored without cluster profiling", "domain": ["ml-systems", "llm-training", "llm-inference", "performance-simulation", "design-space-exploration"], "abstraction": "ml-system"},
+    "content": {
+     "depicts": "whole-system architecture",
+     "components": [
+      {"name": "Input Description", "role": "left flank: Native Model (Hugging Face, vLLM, Custom PyTorch logos) + System Config (GPU/NPU info, interconnect, parallelism plan)", "container": null, "novel": false},
+      {"name": "Graph-based Frontend", "role": "model information + configuration -> graph generation (Linear, Matmul, Scale, Softmax) -> graph manipulation -> graph execution producing a trace", "container": "Charon Simulation Platform", "novel": true},
+      {"name": "Multi-engine Backend", "role": "operator simulator with profiling, prediction and analytical (computation / communication) engines joined by a fused engine, plus an op overlap processor", "container": "Charon Simulation Platform", "novel": true},
+      {"name": "Design Explorer", "role": "design parameters as a search tree pruned by a rule-based pruning tool", "container": "Charon Simulation Platform", "novel": true},
+      {"name": "Simulation Results", "role": "right flank: simulation summary (latency, flops / MFU, memory, power), timeline trace (single layer, 3D), design exploration (best config)", "container": null, "novel": false}
+     ],
+     "flows": [
+      {"from": "Input Description", "to": "Charon Simulation Platform", "what": "model and system config", "step": null},
+      {"from": "Graph-based Frontend", "to": "Multi-engine Backend", "what": "operator graph (implicit, by adjacency)", "step": null},
+      {"from": "Charon Simulation Platform", "to": "Simulation Results", "what": "summary, traces, best configuration", "step": null}
+     ],
+     "key_idea": "One platform turns a native model plus a system config into an operator graph, simulates every operator with the cheapest accurate engine, and searches configurations by pruning.",
+     "reading_order": "Left flank inputs -> frontend (top-down inside) -> backend -> design explorer -> right flank outputs."
+    },
+    "layout": {"template": "other", "direction": "left-right", "nesting_depth": 3, "lanes": false, "legend": "none", "step_markers": "none", "panels": 1, "column": "double", "aspect": 3.74, "text_density": "dense"},
+    "style": {
+     "palette": [
+      {"hex": "#d9d9d9", "used_for": "grey header bars (model information, operator simulator ground, design parameters, op overlap processor, fused engine)"},
+      {"hex": "#cddfff", "used_for": "graph-generation operators, profiling engine"},
+      {"hex": "#ffecd6", "used_for": "prediction engine"},
+      {"hex": "#b5d8cb", "used_for": "analytical engine"},
+      {"hex": "#ffebeb", "used_for": "frontend stage grounds, rule-based pruning tool"},
+      {"hex": "#042433", "used_for": "outlines"},
+      {"hex": "#000000", "used_for": "outer frame, arrows, text"}
+     ],
+     "background": "white",
+     "fill": "flat",
+     "stroke": "dark ink ~0.6 pt on every box; a black ~1.3 pt frame around the whole figure",
+     "font": "Calibri Bold throughout, 6-7 pt at print size; bullets for output lists",
+     "corners": "rounded",
+     "arrows": "few, short, thick black arrows between flanks and core; tree edges as plain black lines",
+     "icons": "framework logos, topology / list line icons, a document icon, mini node-link graphs, mini timeline bars"
+    },
+    "encoding": {
+     "color_means": "fill = engine / stage identity (blue profiling, peach prediction, mint analytical, grey structural headers), reused in the frontend, backend and later figures",
+     "line_style_means": "solid only",
+     "emphasis": "no accent colour; the core is singled out by its size, its frame and its title under the frame",
+     "reusable_patterns": ["flank-core-flank overview inside a thick outer frame, flank titles above, subsystem titles below", "grey header bar at the top of each subsystem", "output list as bold bullets plus one tiny glyph per output"],
+     "weaknesses": ["dense: about 60 text runs in a 470 pt strip"]
+    },
+    "tags": ["llm simulation", "computation graph", "multi-engine backend", "design space exploration", "pruning", "system overview"],
+    "provenance": {"sections": ["3.1 Architecture Overview"], "evidence": ["our unified all-in-one simulator for LLM training, inference and design-space exploration", "ingests native models such as HuggingFace, vLLM, or customized PyTorch models"]},
+    "summary": "A double-column overview framed in black: on the left the input description (native model from Hugging Face, vLLM or PyTorch, and a system config of GPU/NPU info, interconnect and parallelism plan); in the middle the Charon Simulation Platform with three equal subsystems -- graph-based frontend, multi-engine backend and design explorer; on the right the simulation results (summary metrics, timeline traces, best configuration).",
+    "summary_zh": "双栏总览图，整图套粗黑框：左边是输入（模型来源和系统配置），中间是 Charon 平台的三个等宽子系统（前端、后端、设计探索器），右边是输出（指标汇总、时间线、最优配置）。",
+    "confidence": "high",
+    "notes": "Style reference for the named style 'charon'."
+   }
+  },
+  {
+   "id": "mlsys26-charon_fig4",
+   "fig": "4",
+   "file": "figs/fig_arch_frontend.pdf",
+   "kind": "architecture",
+   "print_width_pt": 228,
+   "section": "3.2 Graph-based Frontend",
+   "caption": "Figure 4: Frontend architecture of proposed Charon simulator. (a) Trace and generate forward and backward groups from native PyTorch models. (b) Apply compiler-style passes for optimizations and analyses.",
+   "slots": [
+    {"template": "two-panel", "star": true,
+     "why_chosen": "Two stacked panels separated by a dash-dot rule: (a) a tracing pipeline from a native model to forward / backward graphs, (b) three tinted dotted pass groups between two rotated grey bookend bars.",
+     "what_to_learn": "Use rotated grey bars as the input and output bookends of a pass pipeline, give each pass family a pale dotted region (peach / blue / pink) holding white rounded steps with vertical ellipses, and draw graphs as pastel node-link glyphs coloured by direction (blue forward, pink backward)."},
+    {"template": "pipeline", "star": false,
+     "why_chosen": "Panel (b) is a left-to-right pipeline of three pass groups whose steps run top-down inside each group.",
+     "what_to_learn": "Hand off between groups with an elbow arrow from the last step of one group to the first of the next."}
+   ],
+   "semantics": {
+    "system": {"name": "Charon", "one_liner": "the graph-based frontend of an LLM performance simulator: trace native PyTorch models into forward / backward graphs and transform them with compiler-style passes", "domain": ["ml-systems", "compilers", "llm-training", "performance-simulation"], "abstraction": "compiler"},
+    "content": {
+     "depicts": "one subsystem",
+     "components": [
+      {"name": "Native PyTorch Models", "role": "(a) input box with framework logos and a rotated layer strip (Embedding, Transformer, ..., LM Head)", "container": "(a)", "novel": false},
+      {"name": "torch.compile / torch.fx.symbolic_trace", "role": "(a) tracer applied to a single transformer block", "container": "(a)", "novel": false},
+      {"name": "Raw Forward Graph", "role": "(a) traced graph plus dummy input tensor and loss function", "container": "(a)", "novel": false},
+      {"name": "Torch AOT Autograd / Graph Optimize + Refine", "role": "(a) steps building the joint graph", "container": "(a)", "novel": false},
+      {"name": "Joint Graph (FWD + BWD) / Torch Partitioner / BWD Postprocess", "role": "(a) split into forward and backward graphs", "container": "(a)", "novel": false},
+      {"name": "Optimization Passes", "role": "(b) operator rewrite, operator fusion, ..., recompute / reorder", "container": "(b)", "novel": true},
+      {"name": "Parallelism Passes", "role": "(b) shard pass (TP/EP/SP), pipeline parallel pass, ..., data parallel pass", "container": "(b)", "novel": true},
+      {"name": "Analysis Passes", "role": "(b) MFU, memory, ..., timeline analysis", "container": "(b)", "novel": true}
+     ],
+     "flows": [
+      {"from": "Native PyTorch Models", "to": "Raw Forward Graph", "what": "trace one transformer block", "step": null},
+      {"from": "Raw Forward Graph", "to": "Joint Graph (FWD + BWD)", "what": "AOT autograd, optimize and refine", "step": null},
+      {"from": "Traced FWD / BWD Graph", "to": "Simulation Results", "what": "optimization -> parallelism -> analysis passes", "step": null}
+     ],
+     "key_idea": "The frontend turns a native model into forward and backward operator graphs and treats every optimization, parallelism and analysis as a graph pass.",
+     "reading_order": "(a) left-to-right then up and across to the joint graph and down into the two graphs; dash-dot rule; (b) left bookend -> three pass groups -> right bookend."
+    },
+    "layout": {"template": "two-panel", "direction": "mixed", "nesting_depth": 2, "lanes": false, "legend": "none", "step_markers": "none", "panels": 2, "column": "single", "aspect": 1.26, "text_density": "dense"},
+    "style": {
+     "palette": [
+      {"hex": "#fef3eb", "used_for": "torch-step boxes, optimization-pass region"},
+      {"hex": "#d9d9d9", "used_for": "joint graph header, graph containers, rotated bookend bars"},
+      {"hex": "#edf1f9", "used_for": "parallelism-pass region"},
+      {"hex": "#fff2f1", "used_for": "analysis-pass region"},
+      {"hex": "#f2f2f2", "used_for": "forward / backward graph containers"},
+      {"hex": "#cddfff", "used_for": "forward graph nodes, transformer layers"},
+      {"hex": "#ffc9c3", "used_for": "backward graph nodes"},
+      {"hex": "#042433", "used_for": "outlines"}
+     ],
+     "background": "white",
+     "fill": "flat",
+     "stroke": "dark ink ~0.65 pt; dotted outlines for the dummy-input box and the pass regions; dash-dot rule between panels",
+     "font": "Calibri Bold, rotated text on layer strips and bookend bars, 5-7 pt at print size",
+     "corners": "rounded",
+     "arrows": "short black arrows, elbow arrows between pass groups",
+     "icons": "framework logos; node-link graph glyphs"
+    },
+    "encoding": {
+     "color_means": "blue = forward, pink = backward; pale region tint = pass family",
+     "line_style_means": "dotted region = a family of interchangeable passes; vertical ellipsis = more passes",
+     "emphasis": "none beyond the bold titles",
+     "reusable_patterns": ["pass pipeline between two rotated grey bookend bars", "pass family as a pale dotted region with white rounded steps", "graph glyph coloured by direction"],
+     "weaknesses": ["single-column print: the step labels print near 5-6 pt"]
+    },
+    "tags": ["computation graph", "torch.compile", "aot autograd", "compiler passes", "operator fusion", "parallelism passes", "frontend"],
+    "provenance": {"sections": ["3.2 Graph-based Frontend"], "evidence": ["the frontend turns the simulation input into a computational graph", "optimizations and parallelisms are abstracted as graph manipulation passes"]},
+    "summary": "Panel (a) traces one transformer block of a native PyTorch model with torch.compile / fx into a raw forward graph, runs AOT autograd and refinement to a joint forward + backward graph and partitions it into forward (blue) and backward (pink) graphs. Panel (b) passes the traced graphs through optimization, parallelism and analysis pass groups to the simulation results.",
+    "summary_zh": "前端图，两个面板用点划线隔开：(a) 从原生模型追踪出前向图，再拆成前向和反向两张图；(b) 三组编译式 pass（优化、并行、分析）夹在两根竖排灰色长条之间。",
+    "confidence": "high",
+    "notes": "Style reference for the named style 'charon'."
+   }
+  },
+  {
+   "id": "mlsys26-charon_fig5",
+   "fig": "5",
+   "file": "figs/fig_arch_backend.pdf",
+   "kind": "architecture",
+   "print_width_pt": 228,
+   "section": "3.3 Multi-engine Driven Backend",
+   "caption": "Figure 5: Backend architecture of Charon simulator. Each operator can be simulated using a profiling, prediction, or analytical engine. A fused backend enables mixed-engine execution, allowing different operators to be simulated by different engines.",
+   "slots": [
+    {"template": "n-panel-comparison", "star": true,
+     "why_chosen": "Each engine is a full-height tinted panel in its identity colour (blue / peach sharing one panel, mint, grey), and the fused engine on the right re-uses the same three colours as its decision boxes.",
+     "what_to_learn": "Tint the whole panel, not just a header, with the subsystem's identity colour, put white boxes inside, and let a later decision flow refer back to each subsystem by a dotted box in that same tint; Y / N labels on the branches."}
+   ],
+   "semantics": {
+    "system": {"name": "Charon", "one_liner": "the multi-engine backend of an LLM performance simulator: profiling, prediction and analytical engines combined by a fused engine", "domain": ["ml-systems", "performance-simulation", "performance-modeling"], "abstraction": "ml-system"},
+    "content": {
+     "depicts": "one subsystem",
+     "components": [
+      {"name": "Profiling Engine", "role": "operator type + shape -> profile on GPU -> profiling database lookup", "container": "left panel (blue)", "novel": true},
+      {"name": "Prediction Engine", "role": "profiling database trains a random-forest predictor for unseen shapes", "container": "left panel (peach)", "novel": true},
+      {"name": "Analytical Engine", "role": "roofline computation analysis and a cluster-simulator communication analysis (NVLink / IB) giving comm latency and link utilization", "container": "middle panel (mint)", "novel": true},
+      {"name": "Fused Engine", "role": "per-operator decision: profiling supported? else prediction supported? else analytical", "container": "right panel (grey)", "novel": true}
+     ],
+     "flows": [
+      {"from": "Operator", "to": "Profiling Engine", "what": "lookup or profile", "step": null},
+      {"from": "Profiling Database", "to": "Random Forest Predictor", "what": "train", "step": null},
+      {"from": "Operator", "to": "Results", "what": "fused-engine fallback chain with Y / N branches", "step": null}
+     ],
+     "key_idea": "Every operator is simulated by the most accurate engine that supports it, falling back from profiling to prediction to an analytical model.",
+     "reading_order": "Left panel top (profiling) then bottom (prediction), middle panel (analytical), right panel decision chain top-down."
+    },
+    "layout": {"template": "other", "direction": "left-right", "nesting_depth": 2, "lanes": false, "legend": "none", "step_markers": "none", "panels": 3, "column": "single", "aspect": 2.36, "text_density": "dense"},
+    "style": {
+     "palette": [
+      {"hex": "#d0e3f6", "used_for": "profiling-engine panel, profiling decision box"},
+      {"hex": "#fff5df", "used_for": "prediction-engine panel, prediction decision box"},
+      {"hex": "#b5d8cb", "used_for": "analytical-engine panel, analytical decision box"},
+      {"hex": "#d9d9d9", "used_for": "fused-engine panel"},
+      {"hex": "#7fb3e9", "used_for": "IB links"},
+      {"hex": "#6bb097", "used_for": "NVLink bars"},
+      {"hex": "#042433", "used_for": "outlines"}
+     ],
+     "background": "white",
+     "fill": "flat",
+     "stroke": "dark ink ~0.65 pt; dotted outlines on the fused engine's decision boxes and the cluster-simulator region",
+     "font": "Calibri Bold, 6-7 pt at print size; a brace for the roofline min()",
+     "corners": "mixed",
+     "arrows": "short thick black arrows with verb labels (Profile, Lookup, Store Results, Train); Y / N on decision branches",
+     "icons": "GPU-card stacks, database cylinders, a tree glyph for the random forest, switch glyphs"
+    },
+    "encoding": {
+     "color_means": "panel tint = engine identity; the fused engine's decision boxes repeat the tint of the engine they ask about",
+     "line_style_means": "dotted = a reference to another engine / a simulated region",
+     "emphasis": "none beyond panel tint and bold titles",
+     "reusable_patterns": ["identity-tinted full panels with white boxes inside", "fallback chain whose decision boxes reuse the tints of the panels they refer to"],
+     "weaknesses": ["the blue / peach split of the left panel is only a change of tint, no border"]
+    },
+    "tags": ["profiling", "performance prediction", "random forest", "roofline", "communication simulation", "nvlink", "infiniband", "fallback"],
+    "provenance": {"sections": ["3.3 Multi-engine Driven Backend"], "evidence": ["integrates profiling-based, prediction-based, and analytical-based backend engines", "a fused backend engine that can use multiple different backend engines"]},
+    "summary": "Three tinted panels: the left holds the profiling engine (blue: profile operators on GPUs into a database, look results up) over the prediction engine (peach: train a random-forest predictor from the database); the middle is the analytical engine (mint: roofline for computation, a cluster simulator over NVLink and IB for communication); the right is the fused engine (grey), a Y/N fallback chain from profiling to prediction to analytical.",
+    "summary_zh": "后端图：三个整块着色的面板，左边上蓝下桃是实测引擎和预测引擎，中间薄荷色是解析引擎，右边灰色是融合引擎；融合引擎里的判断框沿用前面三种颜色，按 Y/N 逐级回退。",
+    "confidence": "high",
+    "notes": "Style reference for the named style 'charon'."
+   }
+  },
+  {
+   "id": "mlsys26-charon_fig6",
+   "fig": "6",
+   "file": "figs/fig_overlap.pdf",
+   "kind": "mechanism",
+   "print_width_pt": 228,
+   "section": "3.4 Operator Overlap",
+   "caption": "Figure 6: Bandwidth-aware communication operators overlap in the proposed Charon simulator, (a) shows the timeline of original communication operations, and (b) shows the timeline with congestion-aware simulation.",
+   "slots": [
+    {"group": "comparison", "star": true,
+     "why_chosen": "Before/after on the same time axis with worked bandwidth values: (a) every communication op at full speed, (b) the same ops slowed down where they overlap, with the bandwidth arithmetic written beside the rows.",
+     "what_to_learn": "Encode the link by hue (green NVLink, blue IB) and the state by fill strength plus outline (solid saturated = full speed, pale dotted = slowed down), give the legend as two arrow-pairs above the axis, and write the congestion arithmetic in the link's own colour next to the rows it explains."}
+   ],
+   "semantics": {
+    "kind": "mechanism",
+    "system": {"name": "Charon", "one_liner": "bandwidth-aware overlap model for concurrent communication operators in an LLM performance simulator", "domain": ["ml-systems", "performance-simulation", "collective-communication", "networking"], "abstraction": "network"},
+    "content": {
+     "groups": ["comparison"],
+     "worked_example": true,
+     "depicts": "a design comparison",
+     "subject": "how overlapping communication operators share NVLink and IB bandwidth, and how the simulator slows each one down accordingly",
+     "base": "timeline",
+     "elements": [
+      {"name": "Comm Op 0", "kind": "row", "role": "communication operator using both NVLink and IB", "container": null, "highlighted": false},
+      {"name": "Comm Op 1", "kind": "row", "role": "short IB operator overlapping Op 0", "container": null, "highlighted": false},
+      {"name": "Comm Op 2", "kind": "row", "role": "NVLink operator overlapping the tail of Op 0", "container": null, "highlighted": false},
+      {"name": "NVLink segment", "kind": "box", "role": "green bar: time on NVLink at a given bandwidth", "container": null, "highlighted": false},
+      {"name": "IB segment", "kind": "box", "role": "blue bar: time on IB at a given bandwidth", "container": null, "highlighted": false},
+      {"name": "Req BW / Congest Aware", "kind": "label", "role": "worked bandwidth split: requested vs granted per op", "container": null, "highlighted": true},
+      {"name": "Full Speed / Slowdown legend", "kind": "label", "role": "solid bars = full speed, dotted pale bars = slowed down", "container": null, "highlighted": false}
+     ],
+     "relations": [
+      {"from": "Comm Op 0 (IB)", "to": "Req BW", "what": "Op 0 and Op 1 both request 50 GB/s of IB and get 25 each", "kind": "mapping", "step": null},
+      {"from": "Comm Op 0 (NVLink)", "to": "Req BW", "what": "Op 0 requests 50 and Op 2 200 on NVLink; granted 40 and 160", "kind": "mapping", "step": null}
+     ],
+     "panels": [
+      {"label": "(a) Original", "axis": "alternatives", "differs": "each operator runs at its own full bandwidth as if alone", "verdict": null},
+      {"label": "(b) Congestion Aware", "axis": "alternatives", "differs": "overlapping portions are slowed to the shared bandwidth, so Op 0 ends later and Op 2 runs at 160 instead of 200 GB/s", "verdict": null}
+     ],
+     "steps": [],
+     "logic": null,
+     "values": {"what": "per-segment bandwidths (50, 25, 40, 200, 160 GB/s) and the requested vs granted split", "linked_by": "coloured arrows from the slowed bars to the arithmetic"},
+     "key_idea": "When communication operators overlap on the same link, each gets a share of the bandwidth, so the simulator stretches the overlapped portions instead of assuming full speed.",
+     "reading_order": "Legend above; (a) three rows at full speed; (b) the same rows with slowed segments and the bandwidth arithmetic beside Op 1 and Op 2."
+    },
+    "layout": {"arrangement": "panels-column", "panel_count": 2, "frame_template": "aligned", "delta_marking": "colour", "direction": "left-right", "nesting_depth": 1, "lanes": true, "legend": "above", "step_markers": "none", "zoom_callout": false, "panels": 2, "column": "single", "aspect": 1.15, "text_density": "moderate"},
+    "style": {
+     "palette": [
+      {"hex": "#6bb097", "used_for": "NVLink bar at full speed"},
+      {"hex": "#7eb2e8", "used_for": "IB bar at full speed"},
+      {"hex": "#b9d9cd", "used_for": "NVLink bar slowed down (dotted outline)"},
+      {"hex": "#c1daf4", "used_for": "IB bar slowed down (dotted outline)"},
+      {"hex": "#178d6a", "used_for": "NVLink outlines, arithmetic text and arrows"},
+      {"hex": "#3f90de", "used_for": "IB outlines, arithmetic text and arrows"}
+     ],
+     "background": "white",
+     "fill": "flat",
+     "stroke": "bar outlines in the bar's own darker hue, solid for full speed and dotted for slowdown; dotted black row separators",
+     "corners": "rounded",
+     "arrows": "thick black time axes; coloured arrows from bars to the arithmetic; black 'Congest Aware' arrows between requested and granted",
+     "font": "Calibri, regular for row labels and bandwidth values, bold for legend, panel titles and arithmetic",
+     "icons": "none"
+    },
+    "encoding": {
+     "color_means": "hue = link (green NVLink, blue IB); text in the link colour belongs to that link",
+     "line_style_means": "dotted outline + pale fill = slowed segment; dotted horizontal rules separate operators",
+     "state_means": "full speed vs slowed down, by fill strength and outline style",
+     "marker_means": "none; bandwidth numbers inside the bars",
+     "emphasis": "the arithmetic beside the rows is bold and coloured",
+     "reusable_patterns": ["before/after timelines on aligned axes, state shown by solid vs pale-dotted bars of the same hue", "worked arithmetic written in the hue of the resource it concerns, arrows from the bars it explains"],
+     "weaknesses": ["the long green arrow looping from Op 0 to Op 2's arithmetic crosses the row separators"]
+    },
+    "tags": ["communication overlap", "bandwidth sharing", "congestion", "nvlink", "infiniband", "timeline", "worked example"],
+    "provenance": {"sections": ["3.4 Operator Overlap"], "evidence": ["the slowdown for each operator is decided by the effective bandwidth as well as the link congestion"]},
+    "summary": "Two aligned timelines of three communication operators. In (a) every operator runs at full bandwidth on NVLink (green) and IB (blue). In (b) the overlapping portions are drawn as pale dotted bars at the shared bandwidth -- Op 0 and Op 1 split IB 25/25, Op 0 and Op 2 get 40/160 on NVLink -- with the requested-versus-granted arithmetic written in the link's colour beside the rows.",
+    "summary_zh": "机制图，上下两条对齐的时间线：(a) 三个通信算子都按满带宽画；(b) 重叠的部分画成浅色虚线条、按分到的带宽变慢，旁边用链路自己的颜色写出请求和实际分到的带宽。",
+    "confidence": "high",
+    "notes": "Style reference for the named style 'charon': the mechanism side of the style (saturated hue per resource, pale dotted for the degraded state)."
+   }
+  },
+  {
+   "id": "mlsys26-charon_fig12",
+   "fig": "12",
+   "file": "figs/dynamic_sp.pdf",
+   "kind": "mechanism",
+   "print_width_pt": 228,
+   "section": "5.1 Dynamic Sequence Parallel Strategy",
+   "caption": "Figure 12: Illustration of zigzag attention and dynamic SP planning. Each request can adopt a different SP configuration: request 1 adopts SP4, and request 2 adopts SP2 with zigzag.",
+   "slots": [
+    {"group": "comparison", "star": true,
+     "why_chosen": "Per-rank operator timelines without and with dynamic SP, coloured by request (blue shades = request 1, red = request 2), ending in a dashed deadline line and a 'Saved Time' double arrow.",
+     "what_to_learn": "Colour the work by whom it belongs to, not by operator; split a bar's fill when one operator serves two requests; mark the gain as a dashed vertical finish line plus a labelled double-headed arrow."},
+    {"group": "anatomy", "star": false,
+     "why_chosen": "Panel (a) explains zigzag attention as KV chunk strips and causal-mask triangles per rank, with circled chunk numbers and a shade ramp.",
+     "what_to_learn": "Number chunks with circled digits and give each chunk one step of a single-hue shade ramp so the reader can follow it from the strip into the mask cells."}
+   ],
+   "semantics": {
+    "kind": "mechanism",
+    "system": {"name": "Charon", "one_liner": "a case study in which the simulator plans a different sequence-parallel configuration per request", "domain": ["ml-systems", "llm-inference", "sequence-parallelism", "attention"], "abstraction": "ml-system"},
+    "content": {
+     "groups": ["comparison", "anatomy"],
+     "worked_example": true,
+     "depicts": "a design comparison",
+     "subject": "how zigzag attention splits KV chunks over ranks, and how giving each request its own SP degree shortens the per-rank timelines",
+     "base": "timeline",
+     "elements": [
+      {"name": "KV chunks 1-4", "kind": "cell", "role": "circled-number chunks in a blue shade ramp, gathered by all-gather (AG)", "container": "(a)", "highlighted": false},
+      {"name": "Causal mask Rank 0 / Rank 1", "kind": "cell", "role": "triangles of mint cells showing which Q x KV blocks each rank computes", "container": "(a)", "highlighted": false},
+      {"name": "Req1 / Req2", "kind": "row", "role": "request token strips, blue shades for request 1, red for request 2", "container": "(b)", "highlighted": false},
+      {"name": "Rank 0-3 timelines", "kind": "lane", "role": "per-rank operator bars: QKV Proj, AG1, Attn1, AG2, Attn2, O Proj", "container": "(b)", "highlighted": false},
+      {"name": "Saved Time", "kind": "label", "role": "green double arrow up to a dashed vertical finish line", "container": "(b)", "highlighted": true}
+     ],
+     "relations": [
+      {"from": "Rank 0 KV", "to": "Rank 1 KV", "what": "all-gather of KV chunks", "kind": "data", "step": null}
+     ],
+     "panels": [
+      {"label": "(a) Zigzag Attention", "axis": "alternatives", "differs": "anatomy of the zigzag split over two ranks", "verdict": null},
+      {"label": "(b) w/o dynamic SP", "axis": "alternatives", "differs": "both requests use SP4 zigzag: every rank runs both requests' attention and a second all-gather", "verdict": null},
+      {"label": "(b) w/ dynamic SP", "axis": "alternatives", "differs": "request 1 uses SP4, request 2 SP2 zigzag: ranks 2-3 skip request 2 and every rank finishes before the old deadline", "verdict": "better"}
+     ],
+     "steps": [],
+     "logic": null,
+     "values": {"what": "chunk indices, SP degrees (SP4, SP2) and rank assignments", "linked_by": "shade ramp and request colour"},
+     "key_idea": "Choosing the SP degree per request lets short requests use fewer ranks, removing redundant communication and finishing the batch earlier.",
+     "reading_order": "(a) left: chunks and masks per rank; (b) right: top timeline without dynamic SP, bottom per-rank timelines with it, ending at the saved-time arrow."
+    },
+    "layout": {"arrangement": "panels-row", "panel_count": 2, "frame_template": "free", "delta_marking": "colour", "direction": "left-right", "nesting_depth": 1, "lanes": true, "legend": "none", "step_markers": "none", "zoom_callout": false, "panels": 2, "column": "single", "aspect": 1.76, "text_density": "dense"},
+    "style": {
+     "palette": [
+      {"hex": "#dceaf8", "used_for": "request-1 chunk, lightest shade"},
+      {"hex": "#a5c8ef", "used_for": "request-1 chunks / bars, mid shade"},
+      {"hex": "#3f90de", "used_for": "request-1 chunk, darkest shade"},
+      {"hex": "#ffc0be", "used_for": "request-2 bars"},
+      {"hex": "#178d6a", "used_for": "causal-mask cells (darkest), saved-time marks"},
+      {"hex": "#da9233", "used_for": "query chunks in (a)"}
+     ],
+     "background": "white",
+     "fill": "flat",
+     "stroke": "black ~0.8 pt outlines on bars and cells; dotted outlines for chunks not held locally",
+     "corners": "rounded",
+     "arrows": "black arrows for all-gather; green double arrow for saved time; dashed green vertical finish line",
+     "font": "Aptos, bold for headings and rank labels, regular inside bars",
+     "icons": "none"
+    },
+    "encoding": {
+     "color_means": "hue = request (blue request 1, red request 2); shade = chunk index; green = the gain",
+     "line_style_means": "dotted outline = data not resident on this rank; dashed vertical = old finish time",
+     "state_means": "w/o vs w/ dynamic SP by which ranks run request-2 operators",
+     "marker_means": "circled numbers = KV chunk index",
+     "emphasis": "saved-time arrow and dashed finish line",
+     "reusable_patterns": ["per-rank operator timelines coloured by request with split fills for shared operators", "dashed finish line + labelled double arrow to show saved time"],
+     "weaknesses": ["the stacked 'Rank 0~3' label in the top timeline is rotated diagonally"]
+    },
+    "tags": ["sequence parallelism", "zigzag attention", "ring attention", "all-gather", "per-rank timeline", "case study"],
+    "provenance": {"sections": ["5.1 Dynamic Sequence Parallel Strategy"], "evidence": ["the simulator-generated dynamic SP plans assign different SP and zigzag configurations to each request within a batch"]},
+    "summary": "(a) Zigzag attention: KV chunks 1-4 are all-gathered so that rank 0 computes chunks 1 and 4 and rank 1 chunks 2 and 3 of the causal mask. (b) Per-rank operator timelines for two requests: with SP4 zigzag for both, every rank runs both requests' attention and a second all-gather; with dynamic SP (request 1 SP4, request 2 SP2), ranks 2-3 skip request 2 and the batch finishes earlier, marked by a saved-time arrow.",
+    "summary_zh": "案例图：(a) zigzag 注意力怎么把 KV 块分给两个 rank；(b) 每个 rank 的算子时间线，按请求着色（蓝是请求 1、红是请求 2），对比统一 SP4 和按请求选 SP 两种做法，最后用虚线和双箭头标出省下的时间。",
+    "confidence": "high",
+    "notes": "Style reference for the named style 'charon'."
+   }
+  }
+ ]
+}

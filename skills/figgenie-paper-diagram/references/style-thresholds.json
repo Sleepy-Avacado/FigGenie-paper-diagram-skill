@@ -1058,5 +1058,5 @@
   "image_heavy_kb": 200,
   "image_aspect_tol": 0.02
  },
- "_doc": " text_ink_*_em: the glyph band lint.py measures text on (above/below the baseline, in em), instead of the renderer's font-dependent line box."
+ "_doc": " text_ink_*_em: the glyph band lint.py measures text on (above/below the baseline, in em) when the face cannot be read; otherwise the ink is measured on the font file (_svgkit.ink_band) -- either way instead of the renderer's font-dependent line box."
 }

@@ -292,7 +292,7 @@ def reference_pass(spec, palettes, rep, base_dir=None):
     for i, a in enumerate(spec.get("annotations") or []):
         if isinstance(a, dict):
             resolve("annotations[%d].anchor" % i, a.get("anchor"),
-                    ("node", "edge", "container", "lane"))
+                    ("node", "edge", "container", "lane", "panel"))
             resolve("annotations[%d].legend_ref" % i, a.get("legend_ref"), ("legend-item",))
     for i, c in enumerate(spec.get("constraints") or []):
         if isinstance(c, dict):
@@ -305,6 +305,7 @@ def reference_pass(spec, palettes, rep, base_dir=None):
             if isinstance(obj, dict) and obj.get("panel"):
                 resolve("%s[%d].panel" % (group, i), obj.get("panel"), ("panel",),
                         " -- declare the panel in panels[]")
+    parent_of = {q.get("id"): q.get("parent") for q in (spec.get("panels") or []) if isinstance(q, dict)}
     for i, pnl in enumerate(spec.get("panels") or []):
         if not isinstance(pnl, dict):
             continue
@@ -312,6 +313,17 @@ def reference_pass(spec, palettes, rep, base_dir=None):
             rep.error("panels[%d].template_of" % i, "a panel cannot be its own template")
         else:
             resolve("panels[%d].template_of" % i, pnl.get("template_of"), ("panel",))
+        if pnl.get("parent"):
+            seen, q = {pnl.get("id")}, pnl.get("parent")
+            while q and q not in seen and q in parent_of:
+                seen.add(q); q = parent_of[q]
+            if pnl.get("parent") == pnl.get("id") or (q and q in seen):
+                rep.error("panels[%d].parent" % i, "panel %r sits in itself (parent chain loops)" % pnl.get("id"))
+            else:
+                resolve("panels[%d].parent" % i, pnl.get("parent"), ("panel",))
+        if pnl.get("view") and pnl.get("axis", "alternatives") != "part":
+            rep.info("panels[%d].view" % i, "view describes a part of a composite figure (axis part); %r is a %s panel"
+                     % (pnl.get("id"), pnl.get("axis", "alternatives")))
     for i, dl in enumerate(spec.get("deltas") or []):
         if not isinstance(dl, dict):
             continue
@@ -369,6 +381,22 @@ def reference_pass(spec, palettes, rep, base_dir=None):
     elif known and pal not in known:
         rep.error("meta.palette", "%r is not a palette id in palettes.json (%s)"
                   % (pal, ", ".join(sorted(known))))
+    style = meta.get("style", "corpus")
+    if style != "corpus":                       # named style: references/styles/<style>.md + .json
+        sp = os.path.join(ROOT, "references", "styles", "%s.json" % style)
+        if not os.path.exists(sp):
+            rep.error("meta.style", "%r has no references/styles/%s.json" % (style, style))
+        else:
+            sj = json.load(open(sp, encoding="utf-8"))
+            if pal not in (sj.get("palette"), "custom"):
+                rep.warn("meta.palette", "style %r is drawn with palette %r (or 'custom'); %r loses the style's "
+                                         "identity fills" % (style, sj.get("palette"), pal))
+            if sj.get("font") and meta.get("font", "arial") != sj["font"]:
+                rep.warn("meta.font", "style %r uses font %r (bold); %r changes its look"
+                         % (style, sj["font"], meta.get("font", "arial")))
+    elif pal in {p.get("id") for p in (palettes.get("palettes") or []) if p.get("style")} if palettes else False:
+        rep.warn("meta.palette", "palette %r belongs to a named style; set meta.style = %r to get its rules "
+                                 "(references/styles/%s.md)" % (pal, pal, pal))
     if meta.get("template") and meta["template"] not in TEMPLATES and meta["template"] != "mechanism":
         rep.error("meta.template", "%r is not one of the 15 template ids in layouts.md" % meta["template"])
     if meta.get("template") == "mechanism" and meta.get("kind", "architecture") != "mechanism":
@@ -473,9 +501,17 @@ def style_pass(spec, rep):
     if col == "double" and meta.get("template") == "layered":
         rep.warn("meta.template", "only 5% of layered figures are double column; a layered "
                                   "figure that will not fit at 240 pt should get taller, not wider")
+    all_panels = [q for q in (spec.get("panels") or []) if isinstance(q, dict)]
+    parts = [q for q in all_panels if q.get("axis") == "part"]
     if int(meta.get("panels", 1) or 1) >= 3:
-        rep.warn("meta.panels", "%s panels -- 'too many panels' is a recorded weakness; "
-                                "consider a chained drill-down instead" % meta.get("panels"))
+        if parts:
+            rep.info("meta.panels", "composite figure with %d parts (%s): each part is budgeted on its own, and the "
+                                    "reader needs a shared legend, one numbering and the same identity colours in every "
+                                    "part (spec-guide §8)" % (len(parts), ", ".join(str(q.get("id")) for q in parts)))
+        else:
+            rep.warn("meta.panels", "%s panels -- 'too many panels' is a recorded weakness; consider a chained "
+                                    "drill-down, or, when the user wants one overview figure, declare the panels as the "
+                                    "parts of a composite figure (panels[] axis 'part', spec-guide §8)" % meta.get("panels"))
 
     # --- density ------------------------------------------------------------
     box_q3, box_p90, edge_max, box_min = ((MECH_BOX_Q3, MECH_BOX_P90, MECH_EDGE_MAX, MECH_BOX_MIN) if mech
@@ -493,14 +529,38 @@ def style_pass(spec, rep):
         boxes = len(nodes) + len(containers) + len(lanes)
         n_edges = len(edges)
     budget = max(1, round(width * height / AREA_PT2_PER_BOX))
-    if boxes > box_p90[col]:
+    if parts:
+        # composite: several small figures in one frame -- hold each part to the single-column bands
+        pid_parent = {q.get("id"): q.get("parent") for q in all_panels}
+        def top(pid):
+            seen = set()
+            while pid and pid_parent.get(pid) and pid not in seen:
+                seen.add(pid); pid = pid_parent[pid]
+            return pid
+        per = {}
+        for n in nodes:
+            if n.get("kind") == "note": continue
+            key = ((n.get("label") or "").strip().lower() or n.get("id")) if mech else n.get("id")
+            per.setdefault(top(n.get("panel")) or "(shared)", set()).add(key)
+        for c in containers:
+            if c.get("kind") != "panel":
+                per.setdefault(top(c.get("panel")) or "(shared)", set()).add("c:" + str(c.get("label") or c.get("id")))
+        for part, keys in sorted(per.items()):
+            if len(keys) > box_p90["single"]:
+                rep.warn("nodes", "part %s has %d labelled boxes, above the single-column p90 of %d that each part of a "
+                                  "composite figure gets -- draw identical rows once (one tall box across the lanes), use "
+                                  "xN, or move numbers into a values part or the caption (spec-guide §8)"
+                         % (part, len(keys), box_p90["single"]))
+        rep.info("nodes", "composite figure: %s labelled boxes per part" %
+                 ", ".join("%s %d" % (k, len(v)) for k, v in sorted(per.items())))
+    elif boxes > box_p90[col]:
         rep.warn("nodes", "%d labelled boxes (nodes+containers+lanes) exceeds the corpus p90 of "
                           "%d for %s column -- split the figure or nest sub-modules"
                  % (boxes, box_p90[col], col))
     elif boxes > box_q3[col]:
         rep.warn("nodes", "%d labelled boxes is above the corpus q3 of %d; check it still "
                           "reads at print size" % (boxes, box_q3[col]))
-    if boxes > budget * 1.4:
+    if boxes > budget * 1.4 and not parts:
         rep.warn("nodes", "%d labelled boxes on a %.0fx%.0f pt canvas -- the area budget is "
                           "~%d boxes (1 per %d pt^2). Grow the canvas or merge components."
                  % (boxes, width, height, budget, AREA_PT2_PER_BOX))
@@ -517,9 +577,11 @@ def style_pass(spec, rep):
                       % n.get("kind", "module"))
     if mech:
         mechanism_pass(spec, rep)
-    elif spec.get("panels") or spec.get("deltas") or spec.get("values") or meta.get("mechanism"):
+    elif (spec.get("panels") and not parts) or spec.get("deltas") or meta.get("mechanism") or \
+            (spec.get("values") and not parts):
         rep.warn("meta.kind", "panels[] / deltas[] / values[] / meta.mechanism are mechanism-figure "
-                              "fields; set meta.kind = 'mechanism' or drop them")
+                              "fields; set meta.kind = 'mechanism' or drop them (a composite figure of parts, "
+                              "panels[] with axis 'part', may keep them in either kind)")
 
     depth = nesting_depth(spec)
     if depth > NESTING_ERROR:
@@ -566,7 +628,23 @@ def style_pass(spec, rep):
         stem = re.sub(r"[-_ ]?\d+$", "", n.get("label", "").strip().lower())
         if stem:
             fam.setdefault(stem, []).append(n)
+    # ids the spec points at one by one (edges, deltas, values, annotations, steps): such boxes are distinct items
+    # the reader tracks (E0 ... E7 each with its own load), not copies to collapse into xN
+    referenced = set()
+    def collect(x):
+        if isinstance(x, dict):
+            for v in x.values(): collect(v)
+        elif isinstance(x, list):
+            for v in x: collect(v)
+        elif isinstance(x, str):
+            referenced.add(x)
+    for arr in ("edges", "deltas", "values", "annotations", "steps"):
+        collect(spec.get(arr) or [])
+    worked = bool(((meta.get("mechanism") or {}).get("worked_example")))
     for stem, group in fam.items():
+        tracked = sum(1 for g in group if g.get("id") in referenced)
+        if worked or tracked >= 2:
+            continue
         if len(group) >= 3 and not any(g.get("multiplicity") for g in group):
             rep.warn("nodes", "%d near-identical boxes named like %r -- draw two plus an "
                               "ellipsis and set multiplicity ('xN') on one node instead"
@@ -629,10 +707,12 @@ def style_pass(spec, rep):
     for e in edges:
         touched.add(e.get("from"))
         touched.add(e.get("to"))
+    # a box inside a container, or inside a panel / part (a bar of a values part, a block of a timeline, a band that
+    # every lane crosses), has its context; only a box floating on its own reads as decoration
     orphans = [n.get("id") for n in nodes
-               if n.get("id") not in touched and not n.get("parent") and n.get("kind") != "note"]
+               if n.get("id") not in touched and not n.get("parent") and not n.get("panel") and n.get("kind") != "note"]
     if orphans:
-        rep.warn("nodes", "%d box(es) with no edge and no parent (%s%s) -- a labelled box with "
+        rep.warn("nodes", "%d box(es) with no edge, no parent and no panel (%s%s) -- a labelled box with "
                           "degree 0 reads as decoration"
                  % (len(orphans), ", ".join(orphans[:5]),
                     ", ..." if len(orphans) > 5 else ""))
@@ -700,6 +780,8 @@ def mechanism_pass(spec, rep):
                                          "panel consistency checks below run -- say how the figure reads in notes")
     elif group not in MECH_GROUPS:
         rep.error("meta.mechanism.group", "%r is not a v3 group (%s) or 'other'" % (group, ", ".join(MECH_GROUPS)))
+    parts = [p for p in panels if p.get("axis") == "part"]
+    panels = [p for p in panels if p.get("axis") != "part"]                # parts repeat no template
     if group in ("comparison", "evolution"):
         if len(panels) < 2:
             rep.warn("panels", "%s figures draw the template two or more times -- declare one panels[] "
@@ -735,11 +817,13 @@ def mechanism_pass(spec, rep):
     if values and not m.get("worked_example"):
         rep.info("values", "values[] declared without meta.mechanism.worked_example -- fine for a few "
                            "annotated numbers, set the flag when the values are the content")
-    if len(panels) >= 2 and arrangement == "single":
-        rep.warn("meta.mechanism.arrangement", "%d panels declared but arrangement is 'single'" % len(panels))
-    if len(panels) < 2 and arrangement.startswith(("panels-", "frames-")):
+    if len(panels) + len(parts) >= 2 and arrangement == "single":
+        rep.warn("meta.mechanism.arrangement", "%d panels declared but arrangement is 'single'" % (len(panels) + len(parts)))
+    if len(panels) + len(parts) < 2 and arrangement.startswith(("panels-", "frames-")):
         rep.warn("meta.mechanism.arrangement", "arrangement %r needs two or more panels[]" % arrangement)
-    if panels and int(meta.get("panels", 1) or 1) != len(panels):
+    if parts and int(meta.get("panels", 1) or 1) != len(parts):
+        rep.info("meta.panels", "meta.panels = %s but the composite figure has %d parts" % (meta.get("panels"), len(parts)))
+    elif not parts and panels and int(meta.get("panels", 1) or 1) != len(panels):
         rep.info("meta.panels", "meta.panels = %s but panels[] has %d entries" % (meta.get("panels"), len(panels)))
     templ = {p.get("id") for p in panels if not p.get("template_of")}
     for i, d in enumerate(deltas):

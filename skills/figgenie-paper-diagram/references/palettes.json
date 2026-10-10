@@ -2485,6 +2485,145 @@
     }
    ],
    "added": "2026-09-18 ground extension (palette_grounds.py)"
+  },
+  {
+   "id": "charon",
+   "name": "Charon: ink outlines, identity pastels, grey headers",
+   "description": "The palette of the named style 'charon' (references/styles/charon.md), measured from the seven diagrams of the Charon paper (MLSys 2026). Every box has a dark-ink outline; four pastels each name one component or concept and keep that meaning across all figures of the paper (blue, peach, mint, pink); grey marks structure (title bars, platform cards, bookend bars); there is no accent fill -- 'ours' versus 'the old way' is said in green and red text.",
+   "when_to_use": "Only with meta.style = 'charon' (or when the user asks for this look). Suits figures whose components fall into 3-4 kinds that recur across several figures of one paper.",
+   "style": "charon",
+   "origin": "style-reference: hand-measured from assets/exemplars/styles/charon/ (not a corpus cluster; palette_cluster.py does not produce it -- re-add by hand if palettes.json is regenerated)",
+   "roles": {
+    "canvas": "#ffffff",
+    "container": null,
+    "lane": "#fef3eb",
+    "module": "#cddfff",
+    "module-alt": [
+     "#ffecd6",
+     "#b5d8cb",
+     "#ffc9c3"
+    ],
+    "accent": "#6bb097",
+    "stroke": "#042433",
+    "text": "#000000",
+    "text-muted": "#595959",
+    "arrow": "#000000",
+    "arrow-accent": "#178d6a",
+    "legend": "#d9d9d9"
+   },
+   "header": "#d9d9d9",
+   "identity_fills": [
+    {
+     "hex": "#cddfff",
+     "name": "blue",
+     "in_charon": "graph operators, profiling engine, transformer blocks, forward"
+    },
+    {
+     "hex": "#ffecd6",
+     "name": "peach",
+     "in_charon": "prediction engine, value generation, outputs, torch steps"
+    },
+    {
+     "hex": "#b5d8cb",
+     "name": "mint",
+     "in_charon": "analytical engine, norm layers, communication, expected output"
+    },
+    {
+     "hex": "#ffc9c3",
+     "name": "pink",
+     "in_charon": "graph simulation, key generation, backward, pruning tool"
+    },
+    {
+     "hex": "#d9d9d9",
+     "name": "grey",
+     "in_charon": "title bars, platform card, fused engine, embedding / LM head, bookend bars"
+    }
+   ],
+   "region_tints": [
+    "#fef3eb",
+    "#edf1f9",
+    "#fff2f1",
+    "#f2f2f2",
+    "#e8f0fb"
+   ],
+   "state_pairs": {
+    "note": "mechanism figures: one hue per resource or owner, solid = normal / full, pale + dotted outline = degraded / not resident",
+    "green": {
+     "solid": "#6bb097",
+     "pale": "#b9d9cd",
+     "line": "#178d6a"
+    },
+    "blue": {
+     "solid": "#7eb2e8",
+     "pale": "#c1daf4",
+     "line": "#3f90de"
+    },
+    "red": {
+     "solid": "#ff7e79",
+     "pale": "#ffc0be",
+     "line": "#c00000"
+    }
+   },
+   "text_colours": {
+    "ours": "#178d6a",
+    "baseline": "#c00000",
+    "forward": "#315ab4",
+    "backward": "#c25160",
+    "update": "#068c79"
+   },
+   "extra_fills": [
+    "#d9d9d9",
+    "#ffebeb",
+    "#d0e4e2",
+    "#fff5df",
+    "#d0e3f6"
+   ],
+   "contrast_notes": "black text on every fill clears 7:1; white text only on #178d6a and #3f90de",
+   "added": "2026-10-09 named style 'charon' (scripts/distill/style_exemplars/charon.json)",
+   "exemplars": [
+    {
+     "id": "mlsys26-charon_fig3",
+     "dir": "assets/exemplars/styles/charon/figures/mlsys26-charon_fig3",
+     "tool": "powerpoint",
+     "venue": "MLSys26"
+    },
+    {
+     "id": "mlsys26-charon_fig5",
+     "dir": "assets/exemplars/styles/charon/figures/mlsys26-charon_fig5",
+     "tool": "powerpoint",
+     "venue": "MLSys26"
+    },
+    {
+     "id": "mlsys26-charon_fig4",
+     "dir": "assets/exemplars/styles/charon/figures/mlsys26-charon_fig4",
+     "tool": "powerpoint",
+     "venue": "MLSys26"
+    },
+    {
+     "id": "mlsys26-charon_fig1",
+     "dir": "assets/exemplars/styles/charon/figures/mlsys26-charon_fig1",
+     "tool": "powerpoint",
+     "venue": "MLSys26"
+    },
+    {
+     "id": "mlsys26-charon_fig2",
+     "dir": "assets/exemplars/styles/charon/figures/mlsys26-charon_fig2",
+     "tool": "powerpoint",
+     "venue": "MLSys26"
+    },
+    {
+     "id": "mlsys26-charon_fig6",
+     "dir": "assets/exemplars/styles/charon/figures/mlsys26-charon_fig6",
+     "tool": "powerpoint",
+     "venue": "MLSys26"
+    },
+    {
+     "id": "mlsys26-charon_fig12",
+     "dir": "assets/exemplars/styles/charon/figures/mlsys26-charon_fig12",
+     "tool": "powerpoint",
+     "venue": "MLSys26"
+    }
+   ]
   }
  ],
  "mechanism": {

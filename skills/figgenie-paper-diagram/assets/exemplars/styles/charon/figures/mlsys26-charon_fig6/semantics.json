@@ -1,0 +1,201 @@
+{
+  "paper_id": "mlsys26-charon",
+  "fig": "6",
+  "kind": "mechanism",
+  "system": {
+    "name": "Charon",
+    "one_liner": "bandwidth-aware overlap model for concurrent communication operators in an LLM performance simulator",
+    "domain": [
+      "ml-systems",
+      "performance-simulation",
+      "collective-communication",
+      "networking"
+    ],
+    "abstraction": "network"
+  },
+  "content": {
+    "groups": [
+      "comparison"
+    ],
+    "worked_example": true,
+    "depicts": "a design comparison",
+    "subject": "how overlapping communication operators share NVLink and IB bandwidth, and how the simulator slows each one down accordingly",
+    "base": "timeline",
+    "elements": [
+      {
+        "name": "Comm Op 0",
+        "kind": "row",
+        "role": "communication operator using both NVLink and IB",
+        "container": null,
+        "highlighted": false
+      },
+      {
+        "name": "Comm Op 1",
+        "kind": "row",
+        "role": "short IB operator overlapping Op 0",
+        "container": null,
+        "highlighted": false
+      },
+      {
+        "name": "Comm Op 2",
+        "kind": "row",
+        "role": "NVLink operator overlapping the tail of Op 0",
+        "container": null,
+        "highlighted": false
+      },
+      {
+        "name": "NVLink segment",
+        "kind": "box",
+        "role": "green bar: time on NVLink at a given bandwidth",
+        "container": null,
+        "highlighted": false
+      },
+      {
+        "name": "IB segment",
+        "kind": "box",
+        "role": "blue bar: time on IB at a given bandwidth",
+        "container": null,
+        "highlighted": false
+      },
+      {
+        "name": "Req BW / Congest Aware",
+        "kind": "label",
+        "role": "worked bandwidth split: requested vs granted per op",
+        "container": null,
+        "highlighted": true
+      },
+      {
+        "name": "Full Speed / Slowdown legend",
+        "kind": "label",
+        "role": "solid bars = full speed, dotted pale bars = slowed down",
+        "container": null,
+        "highlighted": false
+      }
+    ],
+    "relations": [
+      {
+        "from": "Comm Op 0 (IB)",
+        "to": "Req BW",
+        "what": "Op 0 and Op 1 both request 50 GB/s of IB and get 25 each",
+        "kind": "mapping",
+        "step": null
+      },
+      {
+        "from": "Comm Op 0 (NVLink)",
+        "to": "Req BW",
+        "what": "Op 0 requests 50 and Op 2 200 on NVLink; granted 40 and 160",
+        "kind": "mapping",
+        "step": null
+      }
+    ],
+    "panels": [
+      {
+        "label": "(a) Original",
+        "axis": "alternatives",
+        "differs": "each operator runs at its own full bandwidth as if alone",
+        "verdict": null
+      },
+      {
+        "label": "(b) Congestion Aware",
+        "axis": "alternatives",
+        "differs": "overlapping portions are slowed to the shared bandwidth, so Op 0 ends later and Op 2 runs at 160 instead of 200 GB/s",
+        "verdict": null
+      }
+    ],
+    "steps": [],
+    "logic": null,
+    "values": {
+      "what": "per-segment bandwidths (50, 25, 40, 200, 160 GB/s) and the requested vs granted split",
+      "linked_by": "coloured arrows from the slowed bars to the arithmetic"
+    },
+    "key_idea": "When communication operators overlap on the same link, each gets a share of the bandwidth, so the simulator stretches the overlapped portions instead of assuming full speed.",
+    "reading_order": "Legend above; (a) three rows at full speed; (b) the same rows with slowed segments and the bandwidth arithmetic beside Op 1 and Op 2."
+  },
+  "layout": {
+    "arrangement": "panels-column",
+    "panel_count": 2,
+    "frame_template": "aligned",
+    "delta_marking": "colour",
+    "direction": "left-right",
+    "nesting_depth": 1,
+    "lanes": true,
+    "legend": "above",
+    "step_markers": "none",
+    "zoom_callout": false,
+    "panels": 2,
+    "column": "single",
+    "aspect": 1.15,
+    "text_density": "moderate"
+  },
+  "style": {
+    "palette": [
+      {
+        "hex": "#6bb097",
+        "used_for": "NVLink bar at full speed"
+      },
+      {
+        "hex": "#7eb2e8",
+        "used_for": "IB bar at full speed"
+      },
+      {
+        "hex": "#b9d9cd",
+        "used_for": "NVLink bar slowed down (dotted outline)"
+      },
+      {
+        "hex": "#c1daf4",
+        "used_for": "IB bar slowed down (dotted outline)"
+      },
+      {
+        "hex": "#178d6a",
+        "used_for": "NVLink outlines, arithmetic text and arrows"
+      },
+      {
+        "hex": "#3f90de",
+        "used_for": "IB outlines, arithmetic text and arrows"
+      }
+    ],
+    "background": "white",
+    "fill": "flat",
+    "stroke": "bar outlines in the bar's own darker hue, solid for full speed and dotted for slowdown; dotted black row separators",
+    "corners": "rounded",
+    "arrows": "thick black time axes; coloured arrows from bars to the arithmetic; black 'Congest Aware' arrows between requested and granted",
+    "font": "Calibri, regular for row labels and bandwidth values, bold for legend, panel titles and arithmetic",
+    "icons": "none"
+  },
+  "encoding": {
+    "color_means": "hue = link (green NVLink, blue IB); text in the link colour belongs to that link",
+    "line_style_means": "dotted outline + pale fill = slowed segment; dotted horizontal rules separate operators",
+    "state_means": "full speed vs slowed down, by fill strength and outline style",
+    "marker_means": "none; bandwidth numbers inside the bars",
+    "emphasis": "the arithmetic beside the rows is bold and coloured",
+    "reusable_patterns": [
+      "before/after timelines on aligned axes, state shown by solid vs pale-dotted bars of the same hue",
+      "worked arithmetic written in the hue of the resource it concerns, arrows from the bars it explains"
+    ],
+    "weaknesses": [
+      "the long green arrow looping from Op 0 to Op 2's arithmetic crosses the row separators"
+    ]
+  },
+  "tags": [
+    "communication overlap",
+    "bandwidth sharing",
+    "congestion",
+    "nvlink",
+    "infiniband",
+    "timeline",
+    "worked example"
+  ],
+  "provenance": {
+    "sections": [
+      "3.4 Operator Overlap"
+    ],
+    "evidence": [
+      "the slowdown for each operator is decided by the effective bandwidth as well as the link congestion"
+    ]
+  },
+  "summary": "Two aligned timelines of three communication operators. In (a) every operator runs at full bandwidth on NVLink (green) and IB (blue). In (b) the overlapping portions are drawn as pale dotted bars at the shared bandwidth -- Op 0 and Op 1 split IB 25/25, Op 0 and Op 2 get 40/160 on NVLink -- with the requested-versus-granted arithmetic written in the link's colour beside the rows.",
+  "summary_zh": "机制图，上下两条对齐的时间线：(a) 三个通信算子都按满带宽画；(b) 重叠的部分画成浅色虚线条、按分到的带宽变慢，旁边用链路自己的颜色写出请求和实际分到的带宽。",
+  "confidence": "high",
+  "notes": "Style reference for the named style 'charon': the mechanism side of the style (saturated hue per resource, pale dotted for the degraded state).",
+  "venue": "MLSys26"
+}

@@ -4,13 +4,15 @@
   python3 scripts/export_pdf.py fig.svg [-o fig.pdf] [--no-check]
 
 * Page size = viewBox width × height in pt (Chromium's PDF API takes inches, so 300 pt = 4.16667 in).
-* The same faces render.py/lint.py use are injected: shipped fonts whole, system-resolved CJK faces subsetted.
-  Chromium writes every glyph it drew as an embedded Type3 program, so the PDF is self-contained even when the
-  SVG itself has no @font-face block. Bitmaps: data URIs as they are, local files from the SVG's folder (URLs are
-  never fetched); each lands in the PDF as an image at its full pixel size.
+* The same faces render.py/lint.py use are injected, subsetted to the figure's text. CFF-outline faces (TeX Gyre
+  Heros = the default `helvetica`, Termes, Latin Modern, Inter, Roboto, Source Sans) are converted to TrueType
+  outlines first (fonttools), because Chromium embeds TrueType faces as real subsetted fonts (Type0, text stays
+  searchable and passes publishers' font checks) but writes CFF faces as Type3 glyph programs. Without fonttools
+  the PDF still works, with Type3 fonts, and the check says so. Bitmaps: data URIs as they are, local files from the
+  SVG's folder (URLs are never fetched); each lands in the PDF as an image at its full pixel size.
 * --check (default) reopens the PDF and reports page size and the font types found (PyMuPDF `fitz` or pypdf;
-  skipped when neither is installed). Non-embedded fonts (a system fallback for a glyph no embedded face has)
-  show up here — fix those with embed_fonts.py / lint.py's font.glyph finding, not in the PDF.
+  skipped when neither is installed). A font that is none of the figure's families is a system fallback for a
+  glyph no embedded face has — fix it with embed_fonts.py / lint.py's font.glyph finding, not in the PDF.
 Use the PDF for LaTeX (\\includegraphics) or Pages; Word takes the embedded SVG directly.
 """
 import argparse, re, sys
@@ -23,7 +25,7 @@ def export(svg_text, out_pdf, base_dir=None):
     vb = K.parse_viewbox(svg_text)
     if not vb: raise SystemExit('the SVG has no viewBox; the contract needs viewBox="0 0 W H" in pt')
     W, H = vb[2], vb[3]
-    css = K._embed_css(svg_text)
+    css = K._embed_css(svg_text, truetype=True)
     svg2 = re.sub(r'<svg\b([^>]*?)\s(width|height)\s*=\s*"[^"]*"', r'<svg\1', K.svg_for_chromium(svg_text, base_dir), count=2)
     svg2 = re.sub(r'<svg\b', f'<svg width="{W}pt" height="{H}pt"', svg2, count=1)
     html = (f'<!doctype html><html><head><meta charset="utf-8"><style>@page{{size:{W}pt {H}pt;margin:0}}'
@@ -74,8 +76,14 @@ def main():
         ok = abs(w - W) < 0.5 and abs(h - H) < 0.5
         imgs = f'; images: {n_img}' if n_img is not None and (n_img or K.image_refs(svg)) else ''
         print(f'check: page {w} x {h} pt {"matches the viewBox" if ok else f"DIFFERS from the viewBox {W} x {H}"}; {n} page(s); fonts: {fonts or "none (no text?)"}{imgs}')
-        bad = [f for f in fonts if f[1] not in ('Type3',) and not f[0].startswith('(embedded')]
-        if bad: print(f'note: {len(bad)} font(s) other than Chromium Type3 glyph programs: {bad} — a system fallback for glyphs no embedded face covers; run lint.py / embed_fonts.py for the culprit characters', file=sys.stderr)
+        norm = lambda x: re.sub(r'[^a-z0-9]', '', x.lower())
+        fams = [norm(K.load_fonts()['families'][k]['css_family']) for k in K.keys_for_svg(svg) if k in K.load_fonts()['families']]
+        type3 = [f for f in fonts if f[1] == 'Type3']
+        if type3:
+            print(f'note: {len(type3)} font(s) are Type3 glyph programs (pip install fonttools to embed CFF faces as TrueType); '
+                  f'fine for LaTeX, but some publishers\' font checks reject Type3', file=sys.stderr)
+        alien = [f for f in fonts if f[1] != 'Type3' and fams and not any(norm(re.sub(r'^[A-Z]{6}\+', '', f[0])).startswith(x) for x in fams)]
+        if alien: print(f'note: {len(alien)} font(s) are none of the figure\'s families: {alien} — a system fallback for glyphs no embedded face covers; run lint.py / embed_fonts.py for the culprit characters', file=sys.stderr)
 
 
 if __name__ == '__main__':

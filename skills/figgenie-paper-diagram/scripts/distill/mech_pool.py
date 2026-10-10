@@ -306,6 +306,7 @@ def main():
     ap.add_argument('--index', default=str(ROOT / 'lab/extracted/corpus_index.csv'))
     ap.add_argument('--semantics', default=str(ROOT / 'lab/extracted/corpus_semantics.jsonl'))
     ap.add_argument('--extracted-dir', default=str(ROOT / 'lab/extracted'))
+    ap.add_argument('--corpus-root', default=None, help='corpus root (<root>/extracted/...): replaces the lab/ defaults of --index, --semantics and --extracted-dir')
     ap.add_argument('--out', required=True)
     ap.add_argument('--agents', type=int, default=2)
     ap.add_argument('--ids', default=None); ap.add_argument('--limit', type=int, default=None)
@@ -313,6 +314,11 @@ def main():
     ap.add_argument('--no-extract', action='store_true'); ap.add_argument('--no-render', action='store_true')
     ap.add_argument('--render-only', action='store_true', help='re-render the grid images of an existing package from its figures.json')
     a = ap.parse_args()
+    if a.corpus_root:
+        cr = Path(a.corpus_root).resolve()
+        if a.index == str(ROOT / 'lab/extracted/corpus_index.csv'): a.index = str(cr / 'extracted' / 'corpus_index.csv')
+        if a.semantics == str(ROOT / 'lab/extracted/corpus_semantics.jsonl'): a.semantics = str(cr / 'extracted' / 'corpus_semantics.jsonl')
+        if a.extracted_dir == str(ROOT / 'lab/extracted'): a.extracted_dir = str(cr / 'extracted')
     t0 = time.time()
     out = Path(a.out); figs_dir = out / 'figs'; pool_dir = out / 'pool'; figs_dir.mkdir(parents=True, exist_ok=True)
     if a.render_only:

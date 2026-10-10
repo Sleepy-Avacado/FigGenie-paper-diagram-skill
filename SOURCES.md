@@ -8,8 +8,10 @@ agent:
   `preview.png`), next to our own annotations (`manifest.json`, `semantics.json`).
 - **2,764 parts** in `skills/figgenie-paper-diagram/assets/symbols/`, cut out of 976 figures. Every
   entry of `index.json` names the figure it was cut from. The other 89 parts of the library are original.
+- **7 figures of 1 named style** in `skills/figgenie-paper-diagram/assets/exemplars/styles/`, the
+  look a style reproduces on request, kept the same way (listed under *Named styles* at the end).
 
-This material comes from the 637 papers listed below and belongs to their authors and publishers. It is
+This material comes from the 638 papers listed below and belongs to their authors and publishers. It is
 **not covered by this repository's MIT License**. FigGenie is not affiliated with the authors, and they do not
 endorse it.
 
@@ -19,7 +21,7 @@ claimed. Exemplar figures were cropped from the page and are otherwise unchanged
 figures.
 
 **Removal requests.** If you are an author or rights holder and want your material removed, email ahawkinthesky@outlook.com
-or open an issue at https://github.com/Sleepy-Avacado/FigGenie/issues. We will take it down.
+or open an issue at https://github.com/Sleepy-Avacado/FigGenie-paper-diagram-skill/issues. We will take it down.
 
 | Paper | Authors | Venue | Exemplar figures | Parts cut from | Licence | Link |
 |---|---|---|---|---|---|---|
@@ -660,3 +662,12 @@ or open an issue at https://github.com/Sleepy-Avacado/FigGenie/issues. We will t
 | *Scaling Automated Database System Testing* | Suyang Zhong and Manuel Rigger | ASPLOS '26 | Fig. 5 | Fig. 5 |  | <https://doi.org/10.1145/3779212.3790215> |
 | *RTeAAL Sim: Using Tensor Algebra to Represent and Accelerate RTL Simulation* | Yan Zhu et al. | ASPLOS '26 |  | Fig. 3 |  | <https://doi.org/10.1145/3779212.3790214> |
 | *Nebula: Infinite-Scale 3D Gaussian Splatting in VR via Collaborative Rendering and Accelerated Stereo Rasterization* | He Zhu et al. | ASPLOS '26 | Fig. 9 | Fig. 11 |  | <https://doi.org/10.1145/3779212.3790190> |
+
+## Named styles
+
+A named style is the look of one paper's figures, which the skill reproduces when asked (`references/styles/`).
+Its figures are kept as exemplars, rendered from the authors' figure files at their printed size.
+
+| Style | Paper | Authors | Venue | Figures | Link |
+|---|---|---|---|---|---|
+| `charon` | *Charon: A Unified and Fine-Grained Simulator for Large-Scale LLM Training and Inference* | Mengtian Yang et al. | MLSys '26 | Fig. 1, 2, 3, 4, 5, 6, 12 | <https://arxiv.org/abs/2605.17164> |

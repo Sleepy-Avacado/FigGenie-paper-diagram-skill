@@ -25,9 +25,19 @@ from collections import Counter, defaultdict
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKILL = os.path.abspath(os.path.join(HERE, os.pardir, os.pardir))
 REPO = os.path.abspath(os.path.join(SKILL, os.pardir))
-EXTRACTED = os.path.join(REPO, "lab", "extracted")
+CORPUS_ROOT = os.path.join(REPO, "lab")   # the systems corpus; --corpus-root / set_corpus_root() point at another one
+EXTRACTED = os.path.join(CORPUS_ROOT, "extracted")
 INDEX_CSV = os.path.join(EXTRACTED, "corpus_index.csv")
 SEMANTICS = os.path.join(EXTRACTED, "corpus_semantics.jsonl")
+
+
+def set_corpus_root(root):
+    """Read <root>/extracted/corpus_index.csv and corpus_semantics.jsonl instead of the systems corpus under lab/."""
+    global CORPUS_ROOT, EXTRACTED, INDEX_CSV, SEMANTICS
+    CORPUS_ROOT = os.path.abspath(root)
+    EXTRACTED = os.path.join(CORPUS_ROOT, "extracted")
+    INDEX_CSV = os.path.join(EXTRACTED, "corpus_index.csv")
+    SEMANTICS = os.path.join(EXTRACTED, "corpus_semantics.jsonl")
 
 TEMPLATES = [
     "pipeline", "layered", "two-panel", "control-data",
@@ -400,7 +410,9 @@ def main() -> int:
                     default="all")
     ap.add_argument("--template", help="restrict per-template output to one template id")
     ap.add_argument("--patterns", metavar="TEMPLATE", help="print reusable_patterns for one template")
+    ap.add_argument("--corpus-root", default=CORPUS_ROOT, help="corpus root: <root>/extracted/corpus_index.csv + corpus_semantics.jsonl (default: the systems corpus, lab/)")
     args = ap.parse_args()
+    set_corpus_root(args.corpus_root)
 
     recs = load()
     if len(recs) != 727:

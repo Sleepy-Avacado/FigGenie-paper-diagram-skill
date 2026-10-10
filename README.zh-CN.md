@@ -124,7 +124,7 @@
 直接把本仓库的地址丢给你的 AI，让它帮你安装这个 skill 即可：
 
 ```text
-帮我安装这个 skill 并配置好依赖：https://github.com/Sleepy-Avacado/FigGenie
+帮我安装这个 skill 并配置好依赖：https://github.com/Sleepy-Avacado/FigGenie-paper-diagram-skill
 ```
 
 也可以手动安装：
@@ -132,16 +132,16 @@
 **Claude Code**：安装插件即可。
 
 ```text
-/plugin marketplace add Sleepy-Avacado/FigGenie
+/plugin marketplace add Sleepy-Avacado/FigGenie-paper-diagram-skill
 /plugin install figgenie@figgenie
 ```
 
 **Codex 及其他 agent**：FigGenie 是一个标准的 Agent Skill，本质上就是一个装着 `SKILL.md`、脚本和参考文档的文件夹。只要你的 agent 能加载 skill、能执行 shell 命令、能查看 PNG 图片，就可以用。
 
 ```bash
-git clone https://github.com/Sleepy-Avacado/FigGenie.git
+git clone https://github.com/Sleepy-Avacado/FigGenie-paper-diagram-skill.git
 mkdir -p ~/.agents/skills
-ln -s "$PWD/FigGenie/skills/figgenie-paper-diagram" ~/.agents/skills/figgenie-paper-diagram
+ln -s "$PWD/FigGenie-paper-diagram-skill/skills/figgenie-paper-diagram" ~/.agents/skills/figgenie-paper-diagram
 ```
 
 旧版 Codex 从 `~/.codex/skills` 读取 skill。
@@ -186,7 +186,7 @@ playwright install chromium
 
 感谢语料库中各篇论文的作者：FigGenie 的画法都是从他们的插图里学来的，这些图的版权仍归原作者所有。上面那张拼图的出处已在 [CREDITS.md](CREDITS.md) 中逐张注明。本项目用到的字体有 TeX Gyre、Latin Modern、Source Sans、Inter、Roboto、Arimo、Tinos、Carlito 和 DejaVu，公式由 MathJax 排版，渲染使用 Playwright 和 Chromium。
 
-**删除请求**：如果本仓库用到了你的图而你希望撤下，请发邮件到 ahawkinthesky@outlook.com，或在 https://github.com/Sleepy-Avacado/FigGenie/issues 提 issue，我们会将其移除。
+**删除请求**：如果本仓库用到了你的图而你希望撤下，请发邮件到 ahawkinthesky@outlook.com，或在 https://github.com/Sleepy-Avacado/FigGenie-paper-diagram-skill/issues 提 issue，我们会将其移除。
 
 ## 许可证
 

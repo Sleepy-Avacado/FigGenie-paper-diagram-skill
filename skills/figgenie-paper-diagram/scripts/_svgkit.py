@@ -77,6 +77,44 @@ def resolve_font(name, default=True):
     return f['default'] if default else None
 
 
+_INK_CACHE = {}
+
+
+def ink_band(text, size, key=None, bold=False, above_em=0.75, below_em=0.25):
+    """(above, below) in pt: how far the glyph ink of one line of `text` reaches above and below its baseline.
+    Measured from the font file of `key` (a fonts.json key; PIL / FreeType) when it resolves, so 'Attention' has no
+    descender band and 'Dispatch' has one; otherwise estimated from the characters (capitals, digits and ascenders
+    reach ~0.75 em, x-height letters ~0.55; g j p q y ( ) [ ] descend ~0.25 em, a comma ~0.15). lint.py measures
+    padding and centring on this band and place_text.py centres labels on it, so the two always agree."""
+    t = (text or '').strip()
+    if not t or not size:
+        return 0.0, 0.0
+    k = (t, round(float(size), 3), key, bool(bold))
+    if k in _INK_CACHE:
+        return _INK_CACHE[k]
+    res = None
+    if key and not has_cjk(t):
+        try:
+            files = font_files(key)
+            path = (files.get('bold') if bold else None) or files.get('regular')
+            if path:
+                from PIL import ImageFont
+                f = ImageFont.truetype(str(path), size=max(1, int(round(size * 10))), index=0)
+                b = f.getbbox(t, anchor='ls')
+                res = (max(0.0, -b[1] / 10.0), max(0.0, b[3] / 10.0))
+        except Exception:
+            res = None
+    if res is None:
+        if has_cjk(t):
+            up, down = 0.88, 0.12
+        else:
+            up = above_em if re.search(r"[A-Z0-9bdfhiklt()\[\]{}/|'\"!?#$%&@^*]", t) else 0.55
+            down = below_em if re.search(r"[gjpqyQ()\[\]{}|@_$/]", t) else 0.15 if re.search(r"[,;]", t) else 0.03
+        res = (up * size, down * size)
+    _INK_CACHE[k] = res
+    return res
+
+
 def is_cjk_key(key):
     fam = load_fonts()['families'].get(key) or {}
     return fam.get('script') == 'cjk'
@@ -191,12 +229,62 @@ def _subset(font_path, text):
     buf = io.BytesIO(); font.save(buf); return buf.getvalue()
 
 
-def font_face_css(keys, text=None, weights=('regular', 'bold', 'italic', 'bolditalic')):
+_TT_CACHE = {}
+
+
+def _to_truetype(data):
+    """CFF-flavoured OpenType bytes -> TrueType (glyf) bytes; anything else is returned unchanged, as is the input
+    when fonttools is missing. Chromium's PDF backend (Skia) embeds TrueType faces as real fonts (Type0 /
+    CIDFontType2, subsetted, text searchable, accepted by publishers' font checks) but writes CFF faces -- TeX Gyre,
+    Latin Modern, Inter, Roboto, Source Sans here -- as Type3 glyph programs. Cubic outlines become quadratic within
+    1 font unit (cu2qu), so the printed shapes do not change."""
+    if data[:4] != b'OTTO':
+        return data
+    import hashlib
+    key = hashlib.sha1(data).hexdigest()
+    if key in _TT_CACHE:
+        return _TT_CACHE[key]
+    try:
+        from fontTools.ttLib import TTFont, newTable
+        from fontTools.pens.cu2quPen import Cu2QuPen
+        from fontTools.pens.ttGlyphPen import TTGlyphPen
+    except ImportError:
+        return data
+    font = TTFont(io.BytesIO(data))
+    if 'CFF ' not in font:                                            # CFF2 (variable) faces are left alone
+        return data
+    order = font.getGlyphOrder(); gs = font.getGlyphSet(); quad = {}
+    for name in order:
+        pen = TTGlyphPen(gs); gs[name].draw(Cu2QuPen(pen, 1.0, reverse_direction=True)); quad[name] = pen.glyph()
+    font['loca'] = newTable('loca'); glyf = font['glyf'] = newTable('glyf')
+    glyf.glyphOrder = order; glyf.glyphs = quad
+    del font['CFF ']
+    if 'VORG' in font: del font['VORG']
+    glyf.compile(font)
+    hmtx = font['hmtx']
+    for name, g in glyf.glyphs.items():
+        if hasattr(g, 'xMin'): hmtx[name] = (hmtx[name][0], g.xMin)
+    maxp = font['maxp'] = newTable('maxp'); maxp.tableVersion = 0x00010000
+    for k in ('maxZones', 'maxTwilightPoints', 'maxStorage', 'maxFunctionDefs', 'maxInstructionDefs',
+              'maxStackElements', 'maxSizeOfInstructions', 'maxComponentElements'):
+        setattr(maxp, k, 1 if k == 'maxZones' else 0)
+    maxp.compile(font)
+    post = font['post']; post.formatType = 2.0; post.extraNames = []; post.mapping = {}; post.glyphOrder = order
+    try: post.compile(font)
+    except OverflowError: post.formatType = 3.0
+    font.sfntVersion = '\x00\x01\x00\x00'
+    buf = io.BytesIO(); font.save(buf); out = buf.getvalue()
+    _TT_CACHE[key] = out
+    return out
+
+
+def font_face_css(keys, text=None, weights=('regular', 'bold', 'italic', 'bolditalic'), truetype=False):
     """@font-face rules (data URIs) for the given font keys; css_family names are used as the family.
     Shipped faces are embedded whole when `text` is None. System-resolved faces (CJK) are only ever embedded
     subsetted (a full CJK face is 10–20 MB) and only when the family is marked `embeddable`; without fonttools
     they are skipped with a note on stderr (Chromium then uses the installed system font, which is fine for
-    rendering and linting locally but not portable)."""
+    rendering and linting locally but not portable). `truetype` converts CFF faces to TrueType outlines first
+    (_to_truetype; export_pdf.py uses it so the PDF embeds real fonts instead of Type3 glyph programs)."""
     f = load_fonts(); css = []
     for key in keys:
         fam = f['families'].get(key)
@@ -218,9 +306,11 @@ def font_face_css(keys, text=None, weights=('regular', 'bold', 'italic', 'boldit
                     if data is None:
                         print(f'note: {fam["css_family"]} found at {p} but fonttools is missing; not embedded (pip install fonttools)', file=sys.stderr)
                         break
-            suf = p.suffix.lower()
-            mime = 'font/otf' if suf in ('.otf', '.ttc') else 'font/ttf'
-            fmt = 'opentype' if suf in ('.otf', '.ttc') else 'truetype'
+            if truetype:
+                data = _to_truetype(data)
+            cff = data[:4] == b'OTTO'
+            mime = 'font/otf' if cff else 'font/ttf'
+            fmt = 'opentype' if cff else 'truetype'
             b64 = base64.b64encode(data).decode()
             css.append(f'@font-face{{font-family:"{fam["css_family"]}";font-weight:{"bold" if "bold" in w else "normal"};'
                        f'font-style:{"italic" if "italic" in w else "normal"};src:url(data:{mime};base64,{b64}) format("{fmt}");}}')
@@ -480,7 +570,8 @@ _MEASURE_JS = r"""
                  markerEnd: cs.markerEnd && cs.markerEnd !== 'none' ? cs.markerEnd : null, markerStart: cs.markerStart && cs.markerStart !== 'none' ? cs.markerStart : null,
                  dash: cs.strokeDasharray && cs.strokeDasharray !== 'none' ? cs.strokeDasharray : null,
                  parentGroup: null, attrs: {}};
-    for (const a of ['data-from','data-to','data-role','data-symbol','data-step','data-edge-kind','data-attached-to','data-anchor','data-order','data-panel','data-delta','data-at','data-replica','data-img','preserveAspectRatio','transform','text-anchor','font-weight','x','y','width','height']) { const v = el.getAttribute(a); if (v !== null) rec.attrs[a] = v; }
+    for (const a of ['data-from','data-to','data-role','data-symbol','data-step','data-edge-kind','data-attached-to','data-anchor','data-order','data-panel','data-delta','data-at','data-replica','data-img','data-scale','data-label','preserveAspectRatio','transform','text-anchor','font-weight','x','y','width','height']) { const v = el.getAttribute(a); if (v !== null) rec.attrs[a] = v; }
+    if (el.closest('[data-scale="data"]')) rec.scaleData = true;         // drawn to scale from data: no snapping advice
     if (tag === 'image') {
       try { const m = el.getCTM(); rec.img = {w: el.width.baseVal.value, h: el.height.baseVal.value, sx: Math.hypot(m.a, m.b), sy: Math.hypot(m.c, m.d)}; } catch (e) {}
     }
@@ -492,8 +583,20 @@ _MEASURE_JS = r"""
       rec.text = (el.textContent || '').replace(/\s+/g, ' ').trim();
       rec.fontSize = parseFloat(cs.fontSize); rec.fontFamily = cs.fontFamily; rec.fontWeight = cs.fontWeight; rec.anchor = cs.textAnchor;
       try { const bb = el.getBBox(); rec.bboxLocal = [bb.x, bb.y, bb.width, bb.height]; } catch (e) {}
-      try { const sp = el.getStartPositionOfChar(0); const q = new DOMPoint(sp.x, sp.y).matrixTransform(el.getCTM()); rec.baseline = q.y - root.top + window.scrollY; } catch (e) {}
-      try { const m = el.getCTM(); rec.rotated = Math.abs(m.b) > 0.01 || Math.abs(m.c) > 0.01; } catch (e) {}
+      try {
+        const sp = el.getStartPositionOfChar(0); let by = sp.y;
+        // dominant-baseline central / middle / hanging ...: the start position lies on that line, not on the alphabetic
+        // baseline the ink model is measured from -- find the offset with an alphabetic twin of the same text
+        const db = cs.dominantBaseline;
+        if (db && db !== 'auto' && db !== 'alphabetic') {
+          const tw = el.cloneNode(true); tw.removeAttribute('id'); tw.setAttribute('dominant-baseline', 'alphabetic'); tw.style.dominantBaseline = 'alphabetic';
+          el.parentNode.insertBefore(tw, el); const b0 = el.getBBox(), b1 = tw.getBBox(); tw.remove();
+          by += b0.y - b1.y; rec.dominantBaseline = db;
+        }
+        const q = new DOMPoint(sp.x, by).matrixTransform(el.getCTM()); rec.baseline = q.y - root.top + window.scrollY; rec.baselineX = q.x - root.left + window.scrollX;
+      } catch (e) {}
+      try { const m = el.getCTM(); rec.rotated = Math.abs(m.b) > 0.01 || Math.abs(m.c) > 0.01; rec.angle = Math.atan2(m.b, m.a) * 180 / Math.PI; } catch (e) {}
+      if (el.closest('[data-label="outside"]')) rec.labelOutside = true;  // a label drawn beside its box on purpose
     }
     if (['path','line','polyline','polygon'].includes(tag)) {
       try {
@@ -506,9 +609,18 @@ _MEASURE_JS = r"""
     }
     out.elements.push(rec); idx++;
   }
-  const fams = new Set();
-  for (const el of svg.querySelectorAll('text')) { for (const f of getComputedStyle(el).fontFamily.split(',')) fams.add(f.trim().replace(/^["']|["']$/g, '')); }
-  for (const f of fams) out.fonts[f] = document.fonts.check('10px "' + f + '"');
+  // a family counts as available when every weight the figure uses resolves: checking only the regular face would
+  // flag an all-bold figure, whose regular face Chromium never loads
+  const fams = new Map();
+  for (const el of svg.querySelectorAll('text')) {
+    const cs = getComputedStyle(el);
+    for (const f of cs.fontFamily.split(',')) {
+      const k = f.trim().replace(/^["']|["']$/g, '');
+      if (!fams.has(k)) fams.set(k, new Set());
+      fams.get(k).add(cs.fontWeight);
+    }
+  }
+  for (const [f, ws] of fams) out.fonts[f] = [...ws].every(w => document.fonts.check(w + ' 10px "' + f + '"'));
   out.width = root.width; out.height = root.height;
   return out;
 }
@@ -530,13 +642,16 @@ def _browser():
     return sync_playwright()
 
 
-def _embed_css(svg_text):
+def _embed_css(svg_text, truetype=False):
+    """@font-face CSS for the figure's families. Shipped faces are embedded whole (fast, cached by Chromium) and
+    system-resolved ones subsetted to the figure's text. truetype=True (PDF export) subsets the shipped faces too and
+    converts CFF outlines to TrueType, so Chromium embeds real fonts rather than Type3 glyph programs."""
     keys = keys_for_svg(svg_text)
-    # subset system-resolved families to the figure's text; shipped ones are embedded whole (fast, cached by Chromium)
     text = svg_text_content(svg_text)
     shipped = [k for k in keys if font_is_shipped(k)]
     system = [k for k in keys if not font_is_shipped(k)]
-    return font_face_css(shipped) + ('\n' + font_face_css(system, text=text) if system else '')
+    return font_face_css(shipped, text=text if truetype else None, truetype=truetype) + \
+        ('\n' + font_face_css(system, text=text, truetype=truetype) if system else '')
 
 
 def measure(svg_text, embed_fonts=True, base_dir=None):

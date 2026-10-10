@@ -1,0 +1,181 @@
+{
+  "paper_id": "mlsys26-charon",
+  "fig": "4",
+  "system": {
+    "name": "Charon",
+    "one_liner": "the graph-based frontend of an LLM performance simulator: trace native PyTorch models into forward / backward graphs and transform them with compiler-style passes",
+    "domain": [
+      "ml-systems",
+      "compilers",
+      "llm-training",
+      "performance-simulation"
+    ],
+    "abstraction": "compiler"
+  },
+  "content": {
+    "depicts": "one subsystem",
+    "components": [
+      {
+        "name": "Native PyTorch Models",
+        "role": "(a) input box with framework logos and a rotated layer strip (Embedding, Transformer, ..., LM Head)",
+        "container": "(a)",
+        "novel": false
+      },
+      {
+        "name": "torch.compile / torch.fx.symbolic_trace",
+        "role": "(a) tracer applied to a single transformer block",
+        "container": "(a)",
+        "novel": false
+      },
+      {
+        "name": "Raw Forward Graph",
+        "role": "(a) traced graph plus dummy input tensor and loss function",
+        "container": "(a)",
+        "novel": false
+      },
+      {
+        "name": "Torch AOT Autograd / Graph Optimize + Refine",
+        "role": "(a) steps building the joint graph",
+        "container": "(a)",
+        "novel": false
+      },
+      {
+        "name": "Joint Graph (FWD + BWD) / Torch Partitioner / BWD Postprocess",
+        "role": "(a) split into forward and backward graphs",
+        "container": "(a)",
+        "novel": false
+      },
+      {
+        "name": "Optimization Passes",
+        "role": "(b) operator rewrite, operator fusion, ..., recompute / reorder",
+        "container": "(b)",
+        "novel": true
+      },
+      {
+        "name": "Parallelism Passes",
+        "role": "(b) shard pass (TP/EP/SP), pipeline parallel pass, ..., data parallel pass",
+        "container": "(b)",
+        "novel": true
+      },
+      {
+        "name": "Analysis Passes",
+        "role": "(b) MFU, memory, ..., timeline analysis",
+        "container": "(b)",
+        "novel": true
+      }
+    ],
+    "flows": [
+      {
+        "from": "Native PyTorch Models",
+        "to": "Raw Forward Graph",
+        "what": "trace one transformer block",
+        "step": null
+      },
+      {
+        "from": "Raw Forward Graph",
+        "to": "Joint Graph (FWD + BWD)",
+        "what": "AOT autograd, optimize and refine",
+        "step": null
+      },
+      {
+        "from": "Traced FWD / BWD Graph",
+        "to": "Simulation Results",
+        "what": "optimization -> parallelism -> analysis passes",
+        "step": null
+      }
+    ],
+    "key_idea": "The frontend turns a native model into forward and backward operator graphs and treats every optimization, parallelism and analysis as a graph pass.",
+    "reading_order": "(a) left-to-right then up and across to the joint graph and down into the two graphs; dash-dot rule; (b) left bookend -> three pass groups -> right bookend."
+  },
+  "layout": {
+    "template": "two-panel",
+    "direction": "mixed",
+    "nesting_depth": 2,
+    "lanes": false,
+    "legend": "none",
+    "step_markers": "none",
+    "panels": 2,
+    "column": "single",
+    "aspect": 1.26,
+    "text_density": "dense"
+  },
+  "style": {
+    "palette": [
+      {
+        "hex": "#fef3eb",
+        "used_for": "torch-step boxes, optimization-pass region"
+      },
+      {
+        "hex": "#d9d9d9",
+        "used_for": "joint graph header, graph containers, rotated bookend bars"
+      },
+      {
+        "hex": "#edf1f9",
+        "used_for": "parallelism-pass region"
+      },
+      {
+        "hex": "#fff2f1",
+        "used_for": "analysis-pass region"
+      },
+      {
+        "hex": "#f2f2f2",
+        "used_for": "forward / backward graph containers"
+      },
+      {
+        "hex": "#cddfff",
+        "used_for": "forward graph nodes, transformer layers"
+      },
+      {
+        "hex": "#ffc9c3",
+        "used_for": "backward graph nodes"
+      },
+      {
+        "hex": "#042433",
+        "used_for": "outlines"
+      }
+    ],
+    "background": "white",
+    "fill": "flat",
+    "stroke": "dark ink ~0.65 pt; dotted outlines for the dummy-input box and the pass regions; dash-dot rule between panels",
+    "font": "Calibri Bold, rotated text on layer strips and bookend bars, 5-7 pt at print size",
+    "corners": "rounded",
+    "arrows": "short black arrows, elbow arrows between pass groups",
+    "icons": "framework logos; node-link graph glyphs"
+  },
+  "encoding": {
+    "color_means": "blue = forward, pink = backward; pale region tint = pass family",
+    "line_style_means": "dotted region = a family of interchangeable passes; vertical ellipsis = more passes",
+    "emphasis": "none beyond the bold titles",
+    "reusable_patterns": [
+      "pass pipeline between two rotated grey bookend bars",
+      "pass family as a pale dotted region with white rounded steps",
+      "graph glyph coloured by direction"
+    ],
+    "weaknesses": [
+      "single-column print: the step labels print near 5-6 pt"
+    ]
+  },
+  "tags": [
+    "computation graph",
+    "torch.compile",
+    "aot autograd",
+    "compiler passes",
+    "operator fusion",
+    "parallelism passes",
+    "frontend"
+  ],
+  "provenance": {
+    "sections": [
+      "3.2 Graph-based Frontend"
+    ],
+    "evidence": [
+      "the frontend turns the simulation input into a computational graph",
+      "optimizations and parallelisms are abstracted as graph manipulation passes"
+    ]
+  },
+  "summary": "Panel (a) traces one transformer block of a native PyTorch model with torch.compile / fx into a raw forward graph, runs AOT autograd and refinement to a joint forward + backward graph and partitions it into forward (blue) and backward (pink) graphs. Panel (b) passes the traced graphs through optimization, parallelism and analysis pass groups to the simulation results.",
+  "summary_zh": "前端图，两个面板用点划线隔开：(a) 从原生模型追踪出前向图，再拆成前向和反向两张图；(b) 三组编译式 pass（优化、并行、分析）夹在两根竖排灰色长条之间。",
+  "confidence": "high",
+  "notes": "Style reference for the named style 'charon'.",
+  "venue": "MLSys26"
+}

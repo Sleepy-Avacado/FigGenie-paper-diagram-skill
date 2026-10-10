@@ -1,0 +1,158 @@
+{
+ "style": "charon",
+ "generated_by": "figgenie-paper-diagram/scripts/distill/build_style_exemplars.py",
+ "selection": "scripts/distill/style_exemplars/charon.json",
+ "style_card": "references/styles/charon.md",
+ "paper": {
+  "paper_id": "mlsys26-charon",
+  "title": "Charon: A Unified and Fine-Grained Simulator for Large-Scale LLM Training and Inference",
+  "authors": "Mengtian Yang, Zhekun Zhang, Mingheng Wu, Jianwen Yan, Hanshi Sun, Li-Wen Chang",
+  "venue": "MLSys26",
+  "arxiv": "2605.17164",
+  "license": "arXiv non-exclusive distribution licence (http://arxiv.org/licenses/nonexclusive-distrib/1.0/); figures reproduced as a style reference with attribution, copyright stays with the authors"
+ },
+ "how_to_read": "open figures/<id>/print.png (print size) or preview.png (detail) and manifest.json; star = must-see. These show one paper's house style; borrow its look, not its layouts.",
+ "n": 7,
+ "figures": [
+  {
+   "id": "mlsys26-charon_fig1",
+   "kind": "architecture",
+   "templates": [
+    {
+     "template": "composite-figure",
+     "star": true,
+     "why_chosen": "Charon-style teaser: left half is the system as a stacked platform card fed by framework logos, right half two boxed result cards (cost, accuracy) that carry the claim in numbers.",
+     "what_to_learn": "Say the contribution three times in one column: a red 'old way' arrow versus a green 'with us' label over the same input/output, a grey platform card holding three full-width pastel capability bars, and two black-framed side cards with one number each in the same red/green.",
+     "note_source": "hand"
+    }
+   ],
+   "section": "1 Introduction",
+   "print": "figures/mlsys26-charon_fig1/print.png",
+   "preview": "figures/mlsys26-charon_fig1/preview.png",
+   "print_width_pt": 221
+  },
+  {
+   "id": "mlsys26-charon_fig2",
+   "kind": "architecture",
+   "templates": [
+    {
+     "template": "composite-figure",
+     "star": true,
+     "why_chosen": "A whole background section in one tall single-column figure: three black-framed bands (a)-(c), each split by a dash-dot rule into a diagram and its companion (zoomed block, parallelism catalogue, motivation chart).",
+     "what_to_learn": "Frame each panel with one thick black rectangle and a bold (a)/(b)/(c) in its top-left corner, split a panel with a dash-dot vertical rule, and keep one fill per concept across panels (blue = transformer block / forward, pink = backward / K / layer, peach = output / V, mint = norm / expected).",
+     "note_source": "hand"
+    },
+    {
+     "template": "overview-with-inset",
+     "star": false,
+     "why_chosen": "Panel (a) zooms one Transformer block of a grey/blue layer stack into a pale-blue detail box with two converging guide lines.",
+     "what_to_learn": "Draw the zoom as two straight lines from the selected stack box to the corners of a tinted detail box; inside it, rotated tall bars (Norm Layer) act as section dividers.",
+     "note_source": "hand"
+    }
+   ],
+   "section": "2 Background and Motivation",
+   "print": "figures/mlsys26-charon_fig2/print.png",
+   "preview": "figures/mlsys26-charon_fig2/preview.png",
+   "print_width_pt": 228
+  },
+  {
+   "id": "mlsys26-charon_fig3",
+   "kind": "architecture",
+   "templates": [
+    {
+     "template": "flanked-core",
+     "star": true,
+     "why_chosen": "The canonical Charon-style overview: inputs on the left, the platform as one big rounded frame with three equal subsystem boxes, outputs on the right, the whole thing inside a thick black outer frame.",
+     "what_to_learn": "Title each flank and each subsystem with bold text, put the subsystem name at the bottom of its box, open each subsystem with a grey header bar, and fill only the leaves with the role colours (blue / peach / mint / pink); tiny glyphs (node-link graphs, timeline bars, a pruned tree) stand in for what each stage produces.",
+     "note_source": "hand"
+    }
+   ],
+   "section": "3.1 Architecture Overview",
+   "print": "figures/mlsys26-charon_fig3/print.png",
+   "preview": "figures/mlsys26-charon_fig3/preview.png",
+   "print_width_pt": 470
+  },
+  {
+   "id": "mlsys26-charon_fig4",
+   "kind": "architecture",
+   "templates": [
+    {
+     "template": "two-panel",
+     "star": true,
+     "why_chosen": "Two stacked panels separated by a dash-dot rule: (a) a tracing pipeline from a native model to forward / backward graphs, (b) three tinted dotted pass groups between two rotated grey bookend bars.",
+     "what_to_learn": "Use rotated grey bars as the input and output bookends of a pass pipeline, give each pass family a pale dotted region (peach / blue / pink) holding white rounded steps with vertical ellipses, and draw graphs as pastel node-link glyphs coloured by direction (blue forward, pink backward).",
+     "note_source": "hand"
+    },
+    {
+     "template": "pipeline",
+     "star": false,
+     "why_chosen": "Panel (b) is a left-to-right pipeline of three pass groups whose steps run top-down inside each group.",
+     "what_to_learn": "Hand off between groups with an elbow arrow from the last step of one group to the first of the next.",
+     "note_source": "hand"
+    }
+   ],
+   "section": "3.2 Graph-based Frontend",
+   "print": "figures/mlsys26-charon_fig4/print.png",
+   "preview": "figures/mlsys26-charon_fig4/preview.png",
+   "print_width_pt": 228
+  },
+  {
+   "id": "mlsys26-charon_fig5",
+   "kind": "architecture",
+   "templates": [
+    {
+     "template": "n-panel-comparison",
+     "star": true,
+     "why_chosen": "Each engine is a full-height tinted panel in its identity colour (blue / peach sharing one panel, mint, grey), and the fused engine on the right re-uses the same three colours as its decision boxes.",
+     "what_to_learn": "Tint the whole panel, not just a header, with the subsystem's identity colour, put white boxes inside, and let a later decision flow refer back to each subsystem by a dotted box in that same tint; Y / N labels on the branches.",
+     "note_source": "hand"
+    }
+   ],
+   "section": "3.3 Multi-engine Driven Backend",
+   "print": "figures/mlsys26-charon_fig5/print.png",
+   "preview": "figures/mlsys26-charon_fig5/preview.png",
+   "print_width_pt": 228
+  },
+  {
+   "id": "mlsys26-charon_fig6",
+   "kind": "mechanism",
+   "groups": [
+    {
+     "group": "comparison",
+     "star": true,
+     "why_chosen": "Before/after on the same time axis with worked bandwidth values: (a) every communication op at full speed, (b) the same ops slowed down where they overlap, with the bandwidth arithmetic written beside the rows.",
+     "what_to_learn": "Encode the link by hue (green NVLink, blue IB) and the state by fill strength plus outline (solid saturated = full speed, pale dotted = slowed down), give the legend as two arrow-pairs above the axis, and write the congestion arithmetic in the link's own colour next to the rows it explains.",
+     "note_source": "hand"
+    }
+   ],
+   "section": "3.4 Operator Overlap",
+   "print": "figures/mlsys26-charon_fig6/print.png",
+   "preview": "figures/mlsys26-charon_fig6/preview.png",
+   "print_width_pt": 228
+  },
+  {
+   "id": "mlsys26-charon_fig12",
+   "kind": "mechanism",
+   "groups": [
+    {
+     "group": "comparison",
+     "star": true,
+     "why_chosen": "Per-rank operator timelines without and with dynamic SP, coloured by request (blue shades = request 1, red = request 2), ending in a dashed deadline line and a 'Saved Time' double arrow.",
+     "what_to_learn": "Colour the work by whom it belongs to, not by operator; split a bar's fill when one operator serves two requests; mark the gain as a dashed vertical finish line plus a labelled double-headed arrow.",
+     "note_source": "hand"
+    },
+    {
+     "group": "anatomy",
+     "star": false,
+     "why_chosen": "Panel (a) explains zigzag attention as KV chunk strips and causal-mask triangles per rank, with circled chunk numbers and a shade ramp.",
+     "what_to_learn": "Number chunks with circled digits and give each chunk one step of a single-hue shade ramp so the reader can follow it from the strip into the mask cells.",
+     "note_source": "hand"
+    }
+   ],
+   "section": "5.1 Dynamic Sequence Parallel Strategy",
+   "print": "figures/mlsys26-charon_fig12/print.png",
+   "preview": "figures/mlsys26-charon_fig12/preview.png",
+   "print_width_pt": 228
+  }
+ ]
+}

@@ -68,6 +68,20 @@ import numpy as np
 # Repo root, used only to check that an exemplar's PNG really exists on disk.
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)))))
+# Directory holding <paper_id>/ figure files; set_extracted_dir() points it at the corpus named by --index.
+EXTRACTED_DIR = os.path.join(REPO_ROOT, "lab", "extracted")
+
+
+def set_extracted_dir(path):
+    global EXTRACTED_DIR
+    EXTRACTED_DIR = os.path.abspath(path)
+
+
+def rel_png(paper_id, svg_name):
+    """Path of a figure's PNG preview, relative to the repo root when inside it (lab/extracted/... for the systems corpus)."""
+    p = os.path.join(EXTRACTED_DIR, paper_id, (svg_name or "").replace(".svg", ".png"))
+    rel = os.path.relpath(p, REPO_ROOT)
+    return p if rel.startswith("..") else rel
 
 # --------------------------------------------------------------------------------------
 # Shared role vocabulary (must stay identical across the skill)
@@ -644,10 +658,8 @@ def write_palettes(path, clusters, recs, k):
                 continue
             # src_svgs can list several files separated by "|" (multi-part figures);
             # take the first that exists, else fall back to the PDF-extracted SVG
-            cands = [f"lab/extracted/{r['paper_id']}/{x.replace('.svg', '.png')}"
-                     for x in (r["src_svgs"] or "").split("|") if x]
-            cands.append(f"lab/extracted/{r['paper_id']}/"
-                         f"{(r['pdf_svg'] or '').replace('.svg', '.png')}")
+            cands = [rel_png(r['paper_id'], x) for x in (r["src_svgs"] or "").split("|") if x]
+            cands.append(rel_png(r['paper_id'], r['pdf_svg'] or ''))
             png = next((x for x in cands
                         if os.path.exists(os.path.join(REPO_ROOT, x))), cands[0])
             exemplars.append(dict(id=eid, png=png, src_svg=png.replace(".png", ".svg"),
@@ -734,6 +746,7 @@ def main():
                     help="clusters smaller than this are merged into their nearest "
                          "neighbour (by centroid distance) until 8-12 families remain")
     args = ap.parse_args()
+    set_extracted_dir(os.path.dirname(os.path.abspath(args.index)))
     os.makedirs(args.out, exist_ok=True)
 
     figs = load(args.semantics, args.index, args.subtype)

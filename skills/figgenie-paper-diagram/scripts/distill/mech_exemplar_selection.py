@@ -31,7 +31,7 @@ HERE = Path(__file__).resolve().parent
 SKILL = HERE.parent.parent
 REPO = SKILL.parent
 GROUPS = ["comparison", "evolution", "logic", "walkthrough", "anatomy"]
-ID_RE = r"((?:asplos|osdi|nsdi|sosp)\d\d-\d{3}_fig(?:tex)?\d+[a-z]?)"
+ID_RE = r"([a-z]+\d\d-\d{3,4}_fig(?:tex)?\d+[a-z]?)"   # osdi24-004_fig1, asplos25-006_figtex2, iclr25-0430_fig1
 
 
 def doc_notes(path):
@@ -71,12 +71,15 @@ def main():
                                               "The original 40 notes are kept in exemplar-review/mechanism/notes/doc_notes.jsonl -- pass that via --notes instead")
     ap.add_argument("--ids", default=str(REPO / "mech-prescreen" / "semantics" / "candidate_ids.txt"))
     ap.add_argument("--semantics", default=str(REPO / "lab" / "extracted" / "corpus_semantics.jsonl"))
+    ap.add_argument("--corpus-root", default=None, help="corpus root (<root>/extracted/...): replaces the lab/ default of --semantics")
     ap.add_argument("--out", default=str(HERE / "exemplar_selection_mechanism.json"))
     ap.add_argument("--no-secondary", action="store_true", help="list each figure under its primary group only")
     ap.add_argument("--notes", nargs="*", default=[], help="JSONL files ({id, why_chosen?, what_to_learn, note_source?}) -- the layouts.md "
                                                           "writer's notes (doc_notes.jsonl, note_source doc) and the note agents' rewrites "
                                                           "(notes_N.jsonl, note_source agent by default); later files override earlier ones")
     a = ap.parse_args()
+    if a.corpus_root and a.semantics == str(REPO / "lab" / "extracted" / "corpus_semantics.jsonl"):
+        a.semantics = str(Path(a.corpus_root).resolve() / "extracted" / "corpus_semantics.jsonl")
     raw = Path(a.decisions).read_text(encoding="utf-8").strip()
     dec = json.loads(raw) if raw else {}
     drop = {i for v in (dec.get("drop") or {}).values() for i in v}

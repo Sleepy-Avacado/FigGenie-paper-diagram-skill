@@ -1246,7 +1246,10 @@ detail panel expands a region of the overview (then it is an `overview-with-inse
 composite, `osdi26-051_fig2`); otherwise leave a clear 8-12 pt gutter and no connectors. One legend
 for the whole figure, under the dominant panel. A raster element (photo, plot) gets a thin frame so
 it reads as a panel, not as decoration (`osdi23-008_fig12`, `nsdi25-030_fig1`). Three panels at
-single column, four at double; if the panels share no component, it is two figures, not one.
+single column, four at double; if the panels share no component, it is two figures, not one. In the spec, declare the panels as the
+figure's **parts** (`panels[]` with `axis: "part"` and a `view`; sub-panels name their part as `parent`): each part
+is then budgeted on its own, and `spec-guide.md` §8 says how to keep the parts reading as one figure and what to
+cut before splitting when the user wants everything in one.
 
 **Exemplars** (`assets/exemplars/composite-figure/index.json` lists all 26; figures live in `assets/exemplars/figures/<id>/`):
 

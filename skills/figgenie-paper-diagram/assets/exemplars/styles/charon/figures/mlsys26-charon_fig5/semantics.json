@@ -1,0 +1,152 @@
+{
+  "paper_id": "mlsys26-charon",
+  "fig": "5",
+  "system": {
+    "name": "Charon",
+    "one_liner": "the multi-engine backend of an LLM performance simulator: profiling, prediction and analytical engines combined by a fused engine",
+    "domain": [
+      "ml-systems",
+      "performance-simulation",
+      "performance-modeling"
+    ],
+    "abstraction": "ml-system"
+  },
+  "content": {
+    "depicts": "one subsystem",
+    "components": [
+      {
+        "name": "Profiling Engine",
+        "role": "operator type + shape -> profile on GPU -> profiling database lookup",
+        "container": "left panel (blue)",
+        "novel": true
+      },
+      {
+        "name": "Prediction Engine",
+        "role": "profiling database trains a random-forest predictor for unseen shapes",
+        "container": "left panel (peach)",
+        "novel": true
+      },
+      {
+        "name": "Analytical Engine",
+        "role": "roofline computation analysis and a cluster-simulator communication analysis (NVLink / IB) giving comm latency and link utilization",
+        "container": "middle panel (mint)",
+        "novel": true
+      },
+      {
+        "name": "Fused Engine",
+        "role": "per-operator decision: profiling supported? else prediction supported? else analytical",
+        "container": "right panel (grey)",
+        "novel": true
+      }
+    ],
+    "flows": [
+      {
+        "from": "Operator",
+        "to": "Profiling Engine",
+        "what": "lookup or profile",
+        "step": null
+      },
+      {
+        "from": "Profiling Database",
+        "to": "Random Forest Predictor",
+        "what": "train",
+        "step": null
+      },
+      {
+        "from": "Operator",
+        "to": "Results",
+        "what": "fused-engine fallback chain with Y / N branches",
+        "step": null
+      }
+    ],
+    "key_idea": "Every operator is simulated by the most accurate engine that supports it, falling back from profiling to prediction to an analytical model.",
+    "reading_order": "Left panel top (profiling) then bottom (prediction), middle panel (analytical), right panel decision chain top-down."
+  },
+  "layout": {
+    "template": "other",
+    "direction": "left-right",
+    "nesting_depth": 2,
+    "lanes": false,
+    "legend": "none",
+    "step_markers": "none",
+    "panels": 3,
+    "column": "single",
+    "aspect": 2.36,
+    "text_density": "dense"
+  },
+  "style": {
+    "palette": [
+      {
+        "hex": "#d0e3f6",
+        "used_for": "profiling-engine panel, profiling decision box"
+      },
+      {
+        "hex": "#fff5df",
+        "used_for": "prediction-engine panel, prediction decision box"
+      },
+      {
+        "hex": "#b5d8cb",
+        "used_for": "analytical-engine panel, analytical decision box"
+      },
+      {
+        "hex": "#d9d9d9",
+        "used_for": "fused-engine panel"
+      },
+      {
+        "hex": "#7fb3e9",
+        "used_for": "IB links"
+      },
+      {
+        "hex": "#6bb097",
+        "used_for": "NVLink bars"
+      },
+      {
+        "hex": "#042433",
+        "used_for": "outlines"
+      }
+    ],
+    "background": "white",
+    "fill": "flat",
+    "stroke": "dark ink ~0.65 pt; dotted outlines on the fused engine's decision boxes and the cluster-simulator region",
+    "font": "Calibri Bold, 6-7 pt at print size; a brace for the roofline min()",
+    "corners": "mixed",
+    "arrows": "short thick black arrows with verb labels (Profile, Lookup, Store Results, Train); Y / N on decision branches",
+    "icons": "GPU-card stacks, database cylinders, a tree glyph for the random forest, switch glyphs"
+  },
+  "encoding": {
+    "color_means": "panel tint = engine identity; the fused engine's decision boxes repeat the tint of the engine they ask about",
+    "line_style_means": "dotted = a reference to another engine / a simulated region",
+    "emphasis": "none beyond panel tint and bold titles",
+    "reusable_patterns": [
+      "identity-tinted full panels with white boxes inside",
+      "fallback chain whose decision boxes reuse the tints of the panels they refer to"
+    ],
+    "weaknesses": [
+      "the blue / peach split of the left panel is only a change of tint, no border"
+    ]
+  },
+  "tags": [
+    "profiling",
+    "performance prediction",
+    "random forest",
+    "roofline",
+    "communication simulation",
+    "nvlink",
+    "infiniband",
+    "fallback"
+  ],
+  "provenance": {
+    "sections": [
+      "3.3 Multi-engine Driven Backend"
+    ],
+    "evidence": [
+      "integrates profiling-based, prediction-based, and analytical-based backend engines",
+      "a fused backend engine that can use multiple different backend engines"
+    ]
+  },
+  "summary": "Three tinted panels: the left holds the profiling engine (blue: profile operators on GPUs into a database, look results up) over the prediction engine (peach: train a random-forest predictor from the database); the middle is the analytical engine (mint: roofline for computation, a cluster simulator over NVLink and IB for communication); the right is the fused engine (grey), a Y/N fallback chain from profiling to prediction to analytical.",
+  "summary_zh": "后端图：三个整块着色的面板，左边上蓝下桃是实测引擎和预测引擎，中间薄荷色是解析引擎，右边灰色是融合引擎；融合引擎里的判断框沿用前面三种颜色，按 Y/N 逐级回退。",
+  "confidence": "high",
+  "notes": "Style reference for the named style 'charon'.",
+  "venue": "MLSys26"
+}

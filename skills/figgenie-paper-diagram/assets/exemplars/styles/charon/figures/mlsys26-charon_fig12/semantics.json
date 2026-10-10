@@ -1,0 +1,186 @@
+{
+  "paper_id": "mlsys26-charon",
+  "fig": "12",
+  "kind": "mechanism",
+  "system": {
+    "name": "Charon",
+    "one_liner": "a case study in which the simulator plans a different sequence-parallel configuration per request",
+    "domain": [
+      "ml-systems",
+      "llm-inference",
+      "sequence-parallelism",
+      "attention"
+    ],
+    "abstraction": "ml-system"
+  },
+  "content": {
+    "groups": [
+      "comparison",
+      "anatomy"
+    ],
+    "worked_example": true,
+    "depicts": "a design comparison",
+    "subject": "how zigzag attention splits KV chunks over ranks, and how giving each request its own SP degree shortens the per-rank timelines",
+    "base": "timeline",
+    "elements": [
+      {
+        "name": "KV chunks 1-4",
+        "kind": "cell",
+        "role": "circled-number chunks in a blue shade ramp, gathered by all-gather (AG)",
+        "container": "(a)",
+        "highlighted": false
+      },
+      {
+        "name": "Causal mask Rank 0 / Rank 1",
+        "kind": "cell",
+        "role": "triangles of mint cells showing which Q x KV blocks each rank computes",
+        "container": "(a)",
+        "highlighted": false
+      },
+      {
+        "name": "Req1 / Req2",
+        "kind": "row",
+        "role": "request token strips, blue shades for request 1, red for request 2",
+        "container": "(b)",
+        "highlighted": false
+      },
+      {
+        "name": "Rank 0-3 timelines",
+        "kind": "lane",
+        "role": "per-rank operator bars: QKV Proj, AG1, Attn1, AG2, Attn2, O Proj",
+        "container": "(b)",
+        "highlighted": false
+      },
+      {
+        "name": "Saved Time",
+        "kind": "label",
+        "role": "green double arrow up to a dashed vertical finish line",
+        "container": "(b)",
+        "highlighted": true
+      }
+    ],
+    "relations": [
+      {
+        "from": "Rank 0 KV",
+        "to": "Rank 1 KV",
+        "what": "all-gather of KV chunks",
+        "kind": "data",
+        "step": null
+      }
+    ],
+    "panels": [
+      {
+        "label": "(a) Zigzag Attention",
+        "axis": "alternatives",
+        "differs": "anatomy of the zigzag split over two ranks",
+        "verdict": null
+      },
+      {
+        "label": "(b) w/o dynamic SP",
+        "axis": "alternatives",
+        "differs": "both requests use SP4 zigzag: every rank runs both requests' attention and a second all-gather",
+        "verdict": null
+      },
+      {
+        "label": "(b) w/ dynamic SP",
+        "axis": "alternatives",
+        "differs": "request 1 uses SP4, request 2 SP2 zigzag: ranks 2-3 skip request 2 and every rank finishes before the old deadline",
+        "verdict": "better"
+      }
+    ],
+    "steps": [],
+    "logic": null,
+    "values": {
+      "what": "chunk indices, SP degrees (SP4, SP2) and rank assignments",
+      "linked_by": "shade ramp and request colour"
+    },
+    "key_idea": "Choosing the SP degree per request lets short requests use fewer ranks, removing redundant communication and finishing the batch earlier.",
+    "reading_order": "(a) left: chunks and masks per rank; (b) right: top timeline without dynamic SP, bottom per-rank timelines with it, ending at the saved-time arrow."
+  },
+  "layout": {
+    "arrangement": "panels-row",
+    "panel_count": 2,
+    "frame_template": "free",
+    "delta_marking": "colour",
+    "direction": "left-right",
+    "nesting_depth": 1,
+    "lanes": true,
+    "legend": "none",
+    "step_markers": "none",
+    "zoom_callout": false,
+    "panels": 2,
+    "column": "single",
+    "aspect": 1.76,
+    "text_density": "dense"
+  },
+  "style": {
+    "palette": [
+      {
+        "hex": "#dceaf8",
+        "used_for": "request-1 chunk, lightest shade"
+      },
+      {
+        "hex": "#a5c8ef",
+        "used_for": "request-1 chunks / bars, mid shade"
+      },
+      {
+        "hex": "#3f90de",
+        "used_for": "request-1 chunk, darkest shade"
+      },
+      {
+        "hex": "#ffc0be",
+        "used_for": "request-2 bars"
+      },
+      {
+        "hex": "#178d6a",
+        "used_for": "causal-mask cells (darkest), saved-time marks"
+      },
+      {
+        "hex": "#da9233",
+        "used_for": "query chunks in (a)"
+      }
+    ],
+    "background": "white",
+    "fill": "flat",
+    "stroke": "black ~0.8 pt outlines on bars and cells; dotted outlines for chunks not held locally",
+    "corners": "rounded",
+    "arrows": "black arrows for all-gather; green double arrow for saved time; dashed green vertical finish line",
+    "font": "Aptos, bold for headings and rank labels, regular inside bars",
+    "icons": "none"
+  },
+  "encoding": {
+    "color_means": "hue = request (blue request 1, red request 2); shade = chunk index; green = the gain",
+    "line_style_means": "dotted outline = data not resident on this rank; dashed vertical = old finish time",
+    "state_means": "w/o vs w/ dynamic SP by which ranks run request-2 operators",
+    "marker_means": "circled numbers = KV chunk index",
+    "emphasis": "saved-time arrow and dashed finish line",
+    "reusable_patterns": [
+      "per-rank operator timelines coloured by request with split fills for shared operators",
+      "dashed finish line + labelled double arrow to show saved time"
+    ],
+    "weaknesses": [
+      "the stacked 'Rank 0~3' label in the top timeline is rotated diagonally"
+    ]
+  },
+  "tags": [
+    "sequence parallelism",
+    "zigzag attention",
+    "ring attention",
+    "all-gather",
+    "per-rank timeline",
+    "case study"
+  ],
+  "provenance": {
+    "sections": [
+      "5.1 Dynamic Sequence Parallel Strategy"
+    ],
+    "evidence": [
+      "the simulator-generated dynamic SP plans assign different SP and zigzag configurations to each request within a batch"
+    ]
+  },
+  "summary": "(a) Zigzag attention: KV chunks 1-4 are all-gathered so that rank 0 computes chunks 1 and 4 and rank 1 chunks 2 and 3 of the causal mask. (b) Per-rank operator timelines for two requests: with SP4 zigzag for both, every rank runs both requests' attention and a second all-gather; with dynamic SP (request 1 SP4, request 2 SP2), ranks 2-3 skip request 2 and the batch finishes earlier, marked by a saved-time arrow.",
+  "summary_zh": "案例图：(a) zigzag 注意力怎么把 KV 块分给两个 rank；(b) 每个 rank 的算子时间线，按请求着色（蓝是请求 1、红是请求 2），对比统一 SP4 和按请求选 SP 两种做法，最后用虚线和双箭头标出省下的时间。",
+  "confidence": "high",
+  "notes": "Style reference for the named style 'charon'.",
+  "venue": "MLSys26"
+}

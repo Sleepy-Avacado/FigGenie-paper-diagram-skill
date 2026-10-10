@@ -405,7 +405,10 @@ def main():
     ap.add_argument('--min-n', type=int, default=10, help='below this n per side, flag a contrast row low_power')
     ap.add_argument('--subtype', default=SUBTYPE, help="diagram subtype to analyse (default 'architecture'; 'mechanism' for the mechanism-figure kind)")
     ap.add_argument('--self-test', action='store_true', help='run internal consistency checks and exit')
+    ap.add_argument('--corpus-root', default=None, help='corpus root (<root>/extracted/corpus_index.csv): replaces the lab/ default of --index')
     args = ap.parse_args()
+    if args.corpus_root and args.index == DEFAULT_INDEX:
+        args.index = os.path.join(os.path.abspath(args.corpus_root), 'extracted', 'corpus_index.csv')
 
     if args.self_test:
         sys.exit(0 if self_test() else 1)

@@ -1,0 +1,40 @@
+{
+  "id": "mlsys26-charon_fig6",
+  "kind": "mechanism",
+  "paper_id": "mlsys26-charon",
+  "fig": "6",
+  "venue": "MLSys26",
+  "year": 2026,
+  "caption": "Figure 6: Bandwidth-aware communication operators overlap in the proposed Charon simulator, (a) shows the timeline of original communication operations, and (b) shows the timeline with congestion-aware simulation.",
+  "title": "Charon: A Unified and Fine-Grained Simulator for Large-Scale LLM Training and Inference",
+  "authors": "Mengtian Yang, Zhekun Zhang, Mingheng Wu, Jianwen Yan, Hanshi Sun, Li-Wen Chang",
+  "arxiv": "2605.17164",
+  "style": "charon",
+  "origin": "style-reference",
+  "column": "single",
+  "aspect": 1.15,
+  "print_width_pt": 228,
+  "print_height_pt": 198.5,
+  "tool": "powerpoint",
+  "source_kind": "author",
+  "license": "arXiv non-exclusive distribution licence (http://arxiv.org/licenses/nonexclusive-distrib/1.0/); figures reproduced as a style reference with attribution, copyright stays with the authors",
+  "files": {
+    "source.svg": "author figure PDF converted to SVG (PyMuPDF, text kept as <text>), author units",
+    "preview.png": "the author figure at its printed width, 300 dpi",
+    "print.png": "the author figure at its printed width, 110 dpi",
+    "semantics.json": "hand-written semantic record",
+    "manifest.json": "this file"
+  },
+  "original_paths": {
+    "source.svg": "external-styles/charon/figs/fig_overlap.pdf"
+  },
+  "groups": [
+    {
+      "group": "comparison",
+      "star": true,
+      "why_chosen": "Before/after on the same time axis with worked bandwidth values: (a) every communication op at full speed, (b) the same ops slowed down where they overlap, with the bandwidth arithmetic written beside the rows.",
+      "what_to_learn": "Encode the link by hue (green NVLink, blue IB) and the state by fill strength plus outline (solid saturated = full speed, pale dotted = slowed down), give the legend as two arrow-pairs above the axis, and write the congestion arithmetic in the link's own colour next to the rows it explains.",
+      "note_source": "hand"
+    }
+  ]
+}

@@ -1,0 +1,159 @@
+{
+  "paper_id": "mlsys26-charon",
+  "fig": "3",
+  "system": {
+    "name": "Charon",
+    "one_liner": "a unified, operator-level simulator that predicts LLM training and inference performance so configurations can be explored without cluster profiling",
+    "domain": [
+      "ml-systems",
+      "llm-training",
+      "llm-inference",
+      "performance-simulation",
+      "design-space-exploration"
+    ],
+    "abstraction": "ml-system"
+  },
+  "content": {
+    "depicts": "whole-system architecture",
+    "components": [
+      {
+        "name": "Input Description",
+        "role": "left flank: Native Model (Hugging Face, vLLM, Custom PyTorch logos) + System Config (GPU/NPU info, interconnect, parallelism plan)",
+        "container": null,
+        "novel": false
+      },
+      {
+        "name": "Graph-based Frontend",
+        "role": "model information + configuration -> graph generation (Linear, Matmul, Scale, Softmax) -> graph manipulation -> graph execution producing a trace",
+        "container": "Charon Simulation Platform",
+        "novel": true
+      },
+      {
+        "name": "Multi-engine Backend",
+        "role": "operator simulator with profiling, prediction and analytical (computation / communication) engines joined by a fused engine, plus an op overlap processor",
+        "container": "Charon Simulation Platform",
+        "novel": true
+      },
+      {
+        "name": "Design Explorer",
+        "role": "design parameters as a search tree pruned by a rule-based pruning tool",
+        "container": "Charon Simulation Platform",
+        "novel": true
+      },
+      {
+        "name": "Simulation Results",
+        "role": "right flank: simulation summary (latency, flops / MFU, memory, power), timeline trace (single layer, 3D), design exploration (best config)",
+        "container": null,
+        "novel": false
+      }
+    ],
+    "flows": [
+      {
+        "from": "Input Description",
+        "to": "Charon Simulation Platform",
+        "what": "model and system config",
+        "step": null
+      },
+      {
+        "from": "Graph-based Frontend",
+        "to": "Multi-engine Backend",
+        "what": "operator graph (implicit, by adjacency)",
+        "step": null
+      },
+      {
+        "from": "Charon Simulation Platform",
+        "to": "Simulation Results",
+        "what": "summary, traces, best configuration",
+        "step": null
+      }
+    ],
+    "key_idea": "One platform turns a native model plus a system config into an operator graph, simulates every operator with the cheapest accurate engine, and searches configurations by pruning.",
+    "reading_order": "Left flank inputs -> frontend (top-down inside) -> backend -> design explorer -> right flank outputs."
+  },
+  "layout": {
+    "template": "other",
+    "direction": "left-right",
+    "nesting_depth": 3,
+    "lanes": false,
+    "legend": "none",
+    "step_markers": "none",
+    "panels": 1,
+    "column": "double",
+    "aspect": 3.74,
+    "text_density": "dense"
+  },
+  "style": {
+    "palette": [
+      {
+        "hex": "#d9d9d9",
+        "used_for": "grey header bars (model information, operator simulator ground, design parameters, op overlap processor, fused engine)"
+      },
+      {
+        "hex": "#cddfff",
+        "used_for": "graph-generation operators, profiling engine"
+      },
+      {
+        "hex": "#ffecd6",
+        "used_for": "prediction engine"
+      },
+      {
+        "hex": "#b5d8cb",
+        "used_for": "analytical engine"
+      },
+      {
+        "hex": "#ffebeb",
+        "used_for": "frontend stage grounds, rule-based pruning tool"
+      },
+      {
+        "hex": "#042433",
+        "used_for": "outlines"
+      },
+      {
+        "hex": "#000000",
+        "used_for": "outer frame, arrows, text"
+      }
+    ],
+    "background": "white",
+    "fill": "flat",
+    "stroke": "dark ink ~0.6 pt on every box; a black ~1.3 pt frame around the whole figure",
+    "font": "Calibri Bold throughout, 6-7 pt at print size; bullets for output lists",
+    "corners": "rounded",
+    "arrows": "few, short, thick black arrows between flanks and core; tree edges as plain black lines",
+    "icons": "framework logos, topology / list line icons, a document icon, mini node-link graphs, mini timeline bars"
+  },
+  "encoding": {
+    "color_means": "fill = engine / stage identity (blue profiling, peach prediction, mint analytical, grey structural headers), reused in the frontend, backend and later figures",
+    "line_style_means": "solid only",
+    "emphasis": "no accent colour; the core is singled out by its size, its frame and its title under the frame",
+    "reusable_patterns": [
+      "flank-core-flank overview inside a thick outer frame, flank titles above, subsystem titles below",
+      "grey header bar at the top of each subsystem",
+      "output list as bold bullets plus one tiny glyph per output"
+    ],
+    "weaknesses": [
+      "dense: about 60 text runs in a 470 pt strip"
+    ]
+  },
+  "tags": [
+    "llm simulation",
+    "computation graph",
+    "multi-engine backend",
+    "design space exploration",
+    "pruning",
+    "system overview"
+  ],
+  "provenance": {
+    "sections": [
+      "3.1 Architecture Overview"
+    ],
+    "evidence": [
+      "our unified all-in-one simulator for LLM training, inference and design-space exploration",
+      "ingests native models such as HuggingFace, vLLM, or customized PyTorch models"
+    ]
+  },
+  "summary": "A double-column overview framed in black: on the left the input description (native model from Hugging Face, vLLM or PyTorch, and a system config of GPU/NPU info, interconnect and parallelism plan); in the middle the Charon Simulation Platform with three equal subsystems -- graph-based frontend, multi-engine backend and design explorer; on the right the simulation results (summary metrics, timeline traces, best configuration).",
+  "summary_zh": "双栏总览图，整图套粗黑框：左边是输入（模型来源和系统配置），中间是 Charon 平台的三个等宽子系统（前端、后端、设计探索器），右边是输出（指标汇总、时间线、最优配置）。",
+  "confidence": "high",
+  "notes": "Style reference for the named style 'charon'.",
+  "venue": "MLSys26"
+}

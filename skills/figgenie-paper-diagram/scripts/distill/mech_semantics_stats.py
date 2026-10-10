@@ -56,6 +56,10 @@ def main():
     ap.add_argument("--semantics", required=True); ap.add_argument("--index", required=True); ap.add_argument("--out", required=True)
     ap.add_argument("--labels", default=None, help="labels_v3_full.jsonl: prior groups, to report how often the record corrected them")
     a = ap.parse_args()
+    ext = os.path.dirname(os.path.abspath(a.index))   # <corpus>/extracted
+    def rel_png(pid, svg):
+        p = os.path.join(ext, pid, svg.replace(".svg", ".png")); r = os.path.relpath(p, os.getcwd())
+        return p if r.startswith("..") else r
     out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
     csv.field_size_limit(10 ** 9)
     idx = {f"{r['paper_id']}_fig{r['fig']}": r for r in csv.DictReader(open(a.index, encoding="utf-8"))}
@@ -178,8 +182,8 @@ def main():
     ex = ["| id | groups | base | arrangement | panels | worked | conf | column | tool | png |", "|---|---|---|---|---|---|---|---|---|---|"]
     for r in sorted(recs, key=lambda r: ((r["content"].get("groups") or ["?"])[0], r["_id"])):
         row = r["_row"]; c = r["content"]
-        cands = [f"lab/extracted/{row.get('paper_id')}/{x.replace('.svg', '.png')}" for x in (row.get("src_svgs") or "").split("|") if x]
-        if row.get("pdf_svg"): cands.append(f"lab/extracted/{row.get('paper_id')}/{row['pdf_svg'].replace('.svg', '.png')}")
+        cands = [rel_png(row.get('paper_id', ''), x) for x in (row.get("src_svgs") or "").split("|") if x]
+        if row.get("pdf_svg"): cands.append(rel_png(row.get('paper_id', ''), row['pdf_svg']))
         png = next((x for x in cands if os.path.exists(x)), "")
         ex.append(f"| {r['_id']} | {', '.join(c.get('groups') or [])} | {c.get('base')} | {r['layout'].get('arrangement')} | {r['layout'].get('panel_count')} | "
                   f"{'yes' if c.get('worked_example') else ''} | {r.get('confidence')} | {row.get('column') or 'single'} | {row.get('tool')} | {png} |")

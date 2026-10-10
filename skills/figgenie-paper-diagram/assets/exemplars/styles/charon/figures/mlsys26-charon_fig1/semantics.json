@@ -1,0 +1,189 @@
+{
+  "paper_id": "mlsys26-charon",
+  "fig": "1",
+  "system": {
+    "name": "Charon",
+    "one_liner": "a unified, operator-level simulator that predicts LLM training and inference performance so configurations can be explored without cluster profiling",
+    "domain": [
+      "ml-systems",
+      "llm-training",
+      "llm-inference",
+      "performance-simulation"
+    ],
+    "abstraction": "ml-system"
+  },
+  "content": {
+    "depicts": "whole-system architecture",
+    "components": [
+      {
+        "name": "Native Models",
+        "role": "input: Hugging Face / PyTorch / vLLM models, drawn as their logos",
+        "container": null,
+        "novel": false
+      },
+      {
+        "name": "GPU cluster",
+        "role": "stacked GPU-card icons standing for running the training / inference workload on real hardware",
+        "container": null,
+        "novel": false
+      },
+      {
+        "name": "Workload outcome",
+        "role": "bullet list: Best Config, Expected Perf, Exec Timeline",
+        "container": null,
+        "novel": false
+      },
+      {
+        "name": "Charon Simulation Platform",
+        "role": "grey rounded platform card holding the three capabilities",
+        "container": null,
+        "novel": true
+      },
+      {
+        "name": "Graph-based Operator-level Simulation",
+        "role": "capability bar (pink)",
+        "container": "Charon Simulation Platform",
+        "novel": true
+      },
+      {
+        "name": "Different Computation Card Adoption",
+        "role": "capability bar (blue)",
+        "container": "Charon Simulation Platform",
+        "novel": true
+      },
+      {
+        "name": "Cluster Topology-aware Communication",
+        "role": "capability bar (mint)",
+        "container": "Charon Simulation Platform",
+        "novel": true
+      },
+      {
+        "name": "Cost Per Evaluation",
+        "role": "side card: $1k per profiling run vs a few cents with Charon, >30k x saving",
+        "container": null,
+        "novel": false
+      },
+      {
+        "name": "Evaluation Accuracy",
+        "role": "side card: two-bar mini chart, profile = 1, Charon -3.74%",
+        "container": null,
+        "novel": false
+      }
+    ],
+    "flows": [
+      {
+        "from": "Native Models",
+        "to": "GPU cluster",
+        "what": "profiling-based tuning (red label): the expensive old way",
+        "step": null
+      },
+      {
+        "from": "Native Models",
+        "to": "Charon Simulation Platform",
+        "what": "design exploration with Charon (green label)",
+        "step": null
+      },
+      {
+        "from": "Charon Simulation Platform",
+        "to": "Workload outcome",
+        "what": "the same outputs, obtained by simulation",
+        "step": null
+      }
+    ],
+    "key_idea": "Charon replaces profiling-based tuning on a GPU cluster with operator-level simulation that gives the same outputs at a 30,000x lower cost and a 3.74% error.",
+    "reading_order": "Top-left logos -> red 'Profiling-based Tuning' arrow to GPU stacks and outcomes, OR down into the grey Charon platform and back up through the green 'Design Exploration w/ Charon' label; then the two cards on the right: cost, then accuracy."
+  },
+  "layout": {
+    "template": "other",
+    "direction": "mixed",
+    "nesting_depth": 2,
+    "lanes": false,
+    "legend": "none",
+    "step_markers": "none",
+    "panels": 3,
+    "column": "single",
+    "aspect": 2.04,
+    "text_density": "dense"
+  },
+  "style": {
+    "palette": [
+      {
+        "hex": "#d9d9d9",
+        "used_for": "platform card ground"
+      },
+      {
+        "hex": "#ffc9c3",
+        "used_for": "capability bar: graph-based operator-level simulation"
+      },
+      {
+        "hex": "#cddfff",
+        "used_for": "capability bar: computation-card adoption"
+      },
+      {
+        "hex": "#b9d9cd",
+        "used_for": "capability bar: topology-aware communication"
+      },
+      {
+        "hex": "#ff7e79",
+        "used_for": "Profile bar in the accuracy chart"
+      },
+      {
+        "hex": "#6bb097",
+        "used_for": "Charon bar in the accuracy chart"
+      },
+      {
+        "hex": "#c00000",
+        "used_for": "text: the old way and its cost ($1k, Profile, Profiling-based Tuning)"
+      },
+      {
+        "hex": "#178d6a",
+        "used_for": "text: Charon and its result (Few cents, -3.74%, Design Exploration w/ Charon)"
+      },
+      {
+        "hex": "#042433",
+        "used_for": "outlines of every box"
+      }
+    ],
+    "background": "white",
+    "fill": "flat",
+    "stroke": "dark ink (#042433) ~0.65 pt outline on every box; black 1.3 pt frames around the two result cards",
+    "font": "Calibri Bold throughout (Aptos Bold for titles), 6-7 pt at print size",
+    "corners": "rounded",
+    "arrows": "short thick straight black arrows with solid heads",
+    "icons": "Hugging Face, PyTorch and vLLM logos; GPU-card stacks; money and coin glyphs"
+  },
+  "encoding": {
+    "color_means": "red = profiling / the expensive baseline, green = Charon / the result; the three pastel bars are one colour per capability and reappear in the later figures (pink graph, blue compute, mint communication)",
+    "line_style_means": "all lines solid; arrows only for the two alternative routes",
+    "emphasis": "coloured bold text for the two competing routes and for the headline numbers; a black frame singles out each result card",
+    "reusable_patterns": [
+      "teaser split: system-as-platform-card on the left, two framed one-number result cards on the right",
+      "old-way vs our-way arrows into the same outputs, labelled in red and green text instead of being drawn twice",
+      "capability list as full-width pastel bars inside a grey platform card"
+    ],
+    "weaknesses": [
+      "at print size (221 pt wide) the capability bars and card titles print at about 6 pt; the bitmap logos are the only non-text identity cue for the input"
+    ]
+  },
+  "tags": [
+    "llm simulation",
+    "performance prediction",
+    "teaser",
+    "cost saving",
+    "profiling vs simulation"
+  ],
+  "provenance": {
+    "sections": [
+      "1 Introduction"
+    ],
+    "evidence": [
+      "enables end-to-end, operator-level simulation for LLM training and inference",
+      "more than 30k cost reduction compared with cluster profiling"
+    ]
+  },
+  "summary": "The teaser contrasts two ways to find a good training or inference configuration for a native model: profiling-based tuning on a real GPU cluster (red route, $1k per evaluation) and design exploration with the Charon simulation platform (green route, a few cents). The platform is a grey rounded card listing three capabilities as full-width pastel bars; two framed cards on the right state the cost saving (>30k x) and the accuracy (-3.74% versus profiling).",
+  "summary_zh": "引言配图：左边是同一个模型的两条调参路线，红色是上集群实测（每次约 1000 美元），绿色是用 Charon 仿真；Charon 画成灰色圆角平台卡，里面三条通栏浅色条列出三项能力。右边两张黑框小卡分别给出成本（省 3 万倍以上）和精度（误差 3.74%）。",
+  "confidence": "high",
+  "notes": "Style reference for the named style 'charon' (references/styles/charon.md); not a rated corpus figure.",
+  "venue": "MLSys26"
+}

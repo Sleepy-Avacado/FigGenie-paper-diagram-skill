@@ -110,7 +110,7 @@ def main():
     if a.ids:
         want = {x.strip() for x in Path(a.ids).read_text().replace("\n", ",").split(",") if x.strip()}
     doc = doc_exemplars(a.doc) if a.doc else {}
-    root = Path(a.index).resolve().parents[2]   # <repo>/lab/extracted/corpus_index.csv -> <repo>
+    ext = Path(a.index).resolve().parent   # <corpus>/extracted, the directory holding <paper_id>/ figure files
     data = {g: [] for g in GROUPS}
     for line in open(a.semantics, encoding="utf-8"):
         if not line.strip(): continue
@@ -119,8 +119,8 @@ def main():
         fid = f"{r['paper_id']}_fig{r['fig']}"
         if want and fid not in want: continue
         row = idx.get(fid, {})
-        cands = [root / "lab/extracted" / row.get("paper_id", "") / x.replace(".svg", ".png") for x in (row.get("src_svgs") or "").split("|") if x]
-        if row.get("pdf_svg"): cands.append(root / "lab/extracted" / row["paper_id"] / row["pdf_svg"].replace(".svg", ".png"))
+        cands = [ext / row.get("paper_id", "") / x.replace(".svg", ".png") for x in (row.get("src_svgs") or "").split("|") if x]
+        if row.get("pdf_svg"): cands.append(ext / row["paper_id"] / row["pdf_svg"].replace(".svg", ".png"))
         png = next((str(p) for p in cands if p.exists()), "")
         c, lay = r["content"], r["layout"]
         g = (c.get("groups") or ["anatomy"])[0]

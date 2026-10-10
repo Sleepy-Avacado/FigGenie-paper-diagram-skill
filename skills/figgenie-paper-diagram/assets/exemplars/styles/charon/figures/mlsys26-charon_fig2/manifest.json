@@ -1,0 +1,47 @@
+{
+  "id": "mlsys26-charon_fig2",
+  "kind": "architecture",
+  "paper_id": "mlsys26-charon",
+  "fig": "2",
+  "venue": "MLSys26",
+  "year": 2026,
+  "caption": "Figure 2: LLM architecture, execution workflows, and tuning challenges: (a) Decoder-only Transformer stack with QKV attention and optional MoE in the feed-forward layers. (b) Training (forward, backward, update) and inference (prefill, decode with KV cache) workflows alongside key parallelism schemes. (c) Iterative profiling-based tuning loop and its GPU-hour/design-space explosion on large GPU clusters.",
+  "title": "Charon: A Unified and Fine-Grained Simulator for Large-Scale LLM Training and Inference",
+  "authors": "Mengtian Yang, Zhekun Zhang, Mingheng Wu, Jianwen Yan, Hanshi Sun, Li-Wen Chang",
+  "arxiv": "2605.17164",
+  "style": "charon",
+  "origin": "style-reference",
+  "column": "single",
+  "aspect": 0.8,
+  "print_width_pt": 228,
+  "print_height_pt": 286.2,
+  "tool": "powerpoint",
+  "source_kind": "author",
+  "license": "arXiv non-exclusive distribution licence (http://arxiv.org/licenses/nonexclusive-distrib/1.0/); figures reproduced as a style reference with attribution, copyright stays with the authors",
+  "files": {
+    "source.svg": "author figure PDF converted to SVG (PyMuPDF, text kept as <text>), author units",
+    "preview.png": "the author figure at its printed width, 300 dpi",
+    "print.png": "the author figure at its printed width, 110 dpi",
+    "semantics.json": "hand-written semantic record",
+    "manifest.json": "this file"
+  },
+  "original_paths": {
+    "source.svg": "external-styles/charon/figs/fig_bg.pdf"
+  },
+  "templates": [
+    {
+      "template": "composite-figure",
+      "star": true,
+      "why_chosen": "A whole background section in one tall single-column figure: three black-framed bands (a)-(c), each split by a dash-dot rule into a diagram and its companion (zoomed block, parallelism catalogue, motivation chart).",
+      "what_to_learn": "Frame each panel with one thick black rectangle and a bold (a)/(b)/(c) in its top-left corner, split a panel with a dash-dot vertical rule, and keep one fill per concept across panels (blue = transformer block / forward, pink = backward / K / layer, peach = output / V, mint = norm / expected).",
+      "note_source": "hand"
+    },
+    {
+      "template": "overview-with-inset",
+      "star": false,
+      "why_chosen": "Panel (a) zooms one Transformer block of a grey/blue layer stack into a pale-blue detail box with two converging guide lines.",
+      "what_to_learn": "Draw the zoom as two straight lines from the selected stack box to the corners of a tinted detail box; inside it, rotated tall bars (Norm Layer) act as section dividers.",
+      "note_source": "hand"
+    }
+  ]
+}

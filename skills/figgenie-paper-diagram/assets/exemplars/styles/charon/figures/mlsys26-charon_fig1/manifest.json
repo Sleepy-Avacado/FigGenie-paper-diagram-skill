@@ -1,0 +1,40 @@
+{
+  "id": "mlsys26-charon_fig1",
+  "kind": "architecture",
+  "paper_id": "mlsys26-charon",
+  "fig": "1",
+  "venue": "MLSys26",
+  "year": 2026,
+  "caption": "Figure 1: Charon enables end-to-end, operator-level simulation for LLM training and inference. It delivers more than 30k cost reduction compared with cluster profiling for large-scale experiment, with only 3.74% total training time error on a large-scale training task.",
+  "title": "Charon: A Unified and Fine-Grained Simulator for Large-Scale LLM Training and Inference",
+  "authors": "Mengtian Yang, Zhekun Zhang, Mingheng Wu, Jianwen Yan, Hanshi Sun, Li-Wen Chang",
+  "arxiv": "2605.17164",
+  "style": "charon",
+  "origin": "style-reference",
+  "column": "single",
+  "aspect": 2.04,
+  "print_width_pt": 221,
+  "print_height_pt": 108.1,
+  "tool": "powerpoint",
+  "source_kind": "author",
+  "license": "arXiv non-exclusive distribution licence (http://arxiv.org/licenses/nonexclusive-distrib/1.0/); figures reproduced as a style reference with attribution, copyright stays with the authors",
+  "files": {
+    "source.svg": "author figure PDF converted to SVG (PyMuPDF, text kept as <text>), author units",
+    "preview.png": "the author figure at its printed width, 300 dpi",
+    "print.png": "the author figure at its printed width, 110 dpi",
+    "semantics.json": "hand-written semantic record",
+    "manifest.json": "this file"
+  },
+  "original_paths": {
+    "source.svg": "external-styles/charon/figs/fig_hooker.pdf"
+  },
+  "templates": [
+    {
+      "template": "composite-figure",
+      "star": true,
+      "why_chosen": "Charon-style teaser: left half is the system as a stacked platform card fed by framework logos, right half two boxed result cards (cost, accuracy) that carry the claim in numbers.",
+      "what_to_learn": "Say the contribution three times in one column: a red 'old way' arrow versus a green 'with us' label over the same input/output, a grey platform card holding three full-width pastel capability bars, and two black-framed side cards with one number each in the same red/green.",
+      "note_source": "hand"
+    }
+  ]
+}

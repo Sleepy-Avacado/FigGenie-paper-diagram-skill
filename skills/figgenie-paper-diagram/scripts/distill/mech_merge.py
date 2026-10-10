@@ -2,7 +2,7 @@
 """Merge the reviewer agents' output of a mechanism parts-mining package (mech_pool.py + cut_parts.py) into one
 deduplicated set of kept parts, with contact sheets for the human pass.
 
-  python3 scripts/distill/mech_merge.py --package mech-parts/pilot-evolution [--out <package>/result]
+  python3 scripts/distill/mech_merge.py --package mech-parts/pilot-evolution [--out <package>/result] [--drop review_drops.json]
 
 Reads  <package>/agents/agent_*/review.jsonl  (+ cuts/<fig>/cuts.json and the pool's candidates.jsonl to
 resolve each line's SVG) and writes under --out:
@@ -48,8 +48,13 @@ QUALITY_RANK = {'clean': 0, 'ok': 1, 'rough': 2}
 LICENSE_EXCLUDED = ('stock', 'emoji', 'logo')
 
 
+PKG_THEMES = {}            # family -> theme from <package>/family_themes.json (AI packages: the vocabulary's themes)
+PKG_GROUPS = None          # allowed `groups` values from <package>/groups.json (AI packages: the figure kinds); None = mechanism v3 groups
+
+
 def theme_of(family):
     if (family or '').startswith('new:'): return 'new-families'
+    if family in PKG_THEMES: return PKG_THEMES[family]
     for name, fams in THEMES:
         if family in fams: return name
     return 'other'
@@ -118,7 +123,8 @@ def normalise(r, earlier_new=frozenset()):
     r['family'] = fam
     g = r.get('groups') or []
     if isinstance(g, str): g = [g]
-    r['groups'] = [x for x in g if x in ('comparison', 'evolution', 'logic', 'walkthrough', 'anatomy')] or ['evolution']
+    allowed = PKG_GROUPS or ('comparison', 'evolution', 'logic', 'walkthrough', 'anatomy')
+    r['groups'] = [x for x in g if x in allowed] or [allowed[0]]
     r['style'] = (r.get('style') or 'flat').lower(); r['quality'] = (r.get('quality') or 'ok').lower()
     if r['quality'] not in QUALITY_RANK: r['quality'] = 'ok'
     r['tags'] = [str(t).lower() for t in (r.get('tags') or [])][:12]
@@ -169,9 +175,13 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--package', required=True); ap.add_argument('--out', default=None)
     ap.add_argument('--no-sheets', action='store_true')
+    ap.add_argument('--drop', default=None, help='JSON list of {figure, ref, reason}: parts a review pass dropped (rejected.jsonl, merge_reason review-drop:<reason>)')
     a = ap.parse_args()
     t0 = time.time()
     pkg = Path(a.package); out = Path(a.out) if a.out else pkg / 'result'
+    global PKG_THEMES, PKG_GROUPS
+    if (pkg / 'family_themes.json').exists(): PKG_THEMES = json.load(open(pkg / 'family_themes.json', encoding='utf-8'))
+    if (pkg / 'groups.json').exists(): PKG_GROUPS = tuple(json.load(open(pkg / 'groups.json', encoding='utf-8')))
     tiles = out / 'tiles'; sheets = out / 'sheets'
     for d in (tiles, sheets): d.mkdir(parents=True, exist_ok=True)
     for old in sheets.glob('*'): old.unlink()          # sheets of an earlier merge must not linger
@@ -196,6 +206,14 @@ def main():
     redraw = [r for r in lines if r.get('keep') is True and (r.get('license') or 'ok') in LICENSE_EXCLUDED]
     rejected = [dict(r, merge_reason='agent-rejected') for r in lines if r.get('keep') is not True]
     rejected += [dict(r, merge_reason='license-%s:redraw-candidate' % r['license']) for r in redraw]
+    dropped = []
+    if a.drop:
+        want = {(d['figure'], d['ref']): d.get('reason') or 'review' for d in json.load(open(a.drop, encoding='utf-8'))}
+        dropped = [r for r in kept if (r.get('figure'), r.get('ref')) in want]
+        kept = [r for r in kept if (r.get('figure'), r.get('ref')) not in want]
+        rejected += [dict(r, merge_reason='review-drop:%s' % want[(r['figure'], r['ref'])]) for r in dropped]
+        missing = sorted(set(want) - {(r['figure'], r['ref']) for r in dropped})
+        print('review drop list: %d dropped%s' % (len(dropped), ('; not among the kept parts: %s' % missing) if missing else ''), flush=True)
     # parts of the library and of earlier waves (<package>/*_parts.tsv: name, kind, family, depicts, figure): their
     # new: families keep the prefix here, their names stay unique
     earlier_names, earlier_new = set(), set()
@@ -212,8 +230,8 @@ def main():
     for r in sorted(kept, key=lambda r: (r['_agent'], r['_line'])):
         seen[r['name']] += 1
         if seen[r['name']] > 1: r['name'] = '%s-%d' % (r['name'], seen[r['name']])
-    print('agents %d, review lines %d, kept %d, agent-rejected %d, licence-excluded %d, problems %d' % (
-        len(agent_dirs), len(lines), len(kept), len(lines) - len(kept) - len(redraw), len(redraw), len(problems)), flush=True)
+    print('agents %d, review lines %d, kept %d, agent-rejected %d, licence-excluded %d, review-dropped %d, problems %d' % (
+        len(agent_dirs), len(lines), len(kept), len(lines) - len(kept) - len(dropped) - len(redraw), len(redraw), len(dropped), len(problems)), flush=True)
 
     # ---- dedupe 1: geometry ------------------------------------------------------
     by_geom = collections.defaultdict(list)
@@ -255,7 +273,7 @@ def main():
     if not a.no_sheets and final:
         by_theme = collections.defaultdict(list)
         for r in final: by_theme[r['theme']].append(r)
-        order = [t for t, _ in THEMES] + ['new-families', 'other']
+        order = [t for t, _ in THEMES] + sorted(set(PKG_THEMES.values())) + ['new-families', 'other']
         for t in order:
             rows = by_theme.get(t) or []
             for s in range(0, len(rows), 30):
@@ -272,9 +290,14 @@ def main():
     # stats
     cnt = lambda key: collections.Counter(key(r) for r in final)
     L = ['# Merge report — %s' % pkg.name, '', 'generated in %.1f min' % ((time.time() - t0) / 60), '',
-         '| stage | count |', '|---|---|', '| review lines | %d |' % len(lines), '| kept by agents | %d |' % len(kept),
+         '| stage | count |', '|---|---|', '| review lines | %d |' % len(lines), '| kept by agents | %d |' % (len(kept) + len(dropped)),
+         '| dropped after review (--drop) | %d |' % len(dropped),
          '| after geometry dedupe | %d |' % len(survivors), '| final | %d |' % len(final),
          '| licence-excluded (kept by agents, set aside as redraw candidates) | %d |' % len(redraw), '| problems (invalid lines) | %d |' % len(problems), '']
+    if dropped:
+        L += ['## dropped after review', '', '| name | reason | figure | agent | family |', '|---|---|---|---|---|']
+        L += ['| %s | %s | %s | %s | %s |' % (r.get('name') or r.get('ref'), want[(r['figure'], r['ref'])], r['figure'], r['_agent'], r.get('family'))
+              for r in dropped] + ['']
     if redraw:
         L += ['## licence-excluded: redraw candidates', '',
               'Flagged artwork (stock / emoji / logo) is not added to the library. Redraw the subject as an original icon; do not trace the artwork.', '',

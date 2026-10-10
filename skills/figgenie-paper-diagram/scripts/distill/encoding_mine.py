@@ -416,7 +416,12 @@ def main(argv=None):
     ap.add_argument("--semantics", default=DEF_SEM)
     ap.add_argument("--index", default=DEF_IDX)
     ap.add_argument("--out", default=DEF_OUT)
+    ap.add_argument("--corpus-root", default=None, help="corpus root (<root>/extracted/...): replaces the lab/ defaults of --semantics and --index")
     a = ap.parse_args(argv)
+    if a.corpus_root:
+        root = os.path.abspath(a.corpus_root)
+        if a.semantics == DEF_SEM: a.semantics = os.path.join(root, "extracted", "corpus_semantics.jsonl")
+        if a.index == DEF_IDX: a.index = os.path.join(root, "extracted", "corpus_index.csv")
     os.makedirs(a.out, exist_ok=True)
 
     recs, _ = load(a.semantics, a.index)

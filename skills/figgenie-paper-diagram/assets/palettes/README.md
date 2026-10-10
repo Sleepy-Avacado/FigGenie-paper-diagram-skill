@@ -45,6 +45,14 @@ swatch (and a dashed sample container) means **no fill — outline only**; the `
 | [`categorical-outline.svg`](categorical-outline.svg) | Categorical hues, outline containers | — / `#f8cecc` / `#a50040` | 25 (3.4%) | `asplos25-110_fig1`, `asplos26-127_fig2` |
 | [`green-ground.svg`](green-ground.svg) | Pale-green ground, blue boxes | `#e2f0d9` / `#dae3f3` / `#ed7d31` | 25 (3.4%) | `nsdi26-087_fig3`, `asplos25-097_fig2` |
 
+### Named styles (added 2026-10-09)
+
+One paper's palette, measured from its figures; use it with `meta.style` set to the same id (`../../references/styles/`).
+
+| card | palette | module / accent | from | exemplars |
+| --- | --- | --- | --- | --- |
+| [`charon.svg`](charon.svg) | Charon: ink outlines, identity pastels, grey headers | `#cddfff` / text `#178d6a` | Charon, MLSys 2026 | `mlsys26-charon_fig3`, `mlsys26-charon_fig5` |
+
 Written by `scripts/distill/make_swatches.py`; the hue families come from
 `scripts/distill/palette_cluster.py` over 272 architecture figures and the ground families from
 `scripts/distill/palette_grounds.py` over the 726 good figures with semantic records. Label colours inside

@@ -28,8 +28,11 @@ faster than from field names, and a wrong brief costs one message while a wrong 
 4. **The one point the figure argues** — what a reader should conclude in five seconds, and where the eye
    should start and travel.
 5. **Layout and style intent** — the template and direction you will use and why (name the closest exemplar
-   ids from `assets/exemplars/`), palette family, whether there is a legend and step numbers, anything the
-   user said about house style (fonts, colours, an existing figure to match).
+   ids from `assets/exemplars/`: some of the template, some from the same field or drawing the same kind of
+   objects, found with `scripts/find_exemplars.py`), palette family, whether there is a legend and step numbers, anything the
+   user said about house style (fonts, colours, an existing figure to match). If they asked for a named style
+   (`references/styles/`, e.g. "Charon 风格"), name it here and, for a series of figures, the identity colour
+   of each component kind so later figures reuse it.
 6. **Assumptions to confirm** — 3–5 yes/no items for what you inferred rather than read, each with its
    source ("§3.1 says 'we introduce', so Scheduler is new — right?"). These are the only questions the user
    must answer; everything else has a default.
@@ -97,7 +100,8 @@ meant to see". Keep the seven sections; write §2–§4 like this, and keep the 
 5. **Layout and style intent** — the group you lean on (comparison / evolution / logic / walkthrough / anatomy,
    `references/mechanism/layouts.md`), the drawn base (component, data-structure, timeline, state-machine,
    table …), the arrangement (one drawing, panels in a row / column / grid, frames, an inset) and why; the two or
-   three closest exemplars from `assets/exemplars/mechanism/<group>/index.json` (named to learn from, not to
+   three closest exemplars from `assets/exemplars/mechanism/<group>/index.json` plus the nearest by domain and
+   content from `scripts/find_exemplars.py` (named to learn from, not to
    reproduce — the layout follows this figure's needs); how the difference will be
    marked (colour on the changed element is the corpus default; ghost, strike, callout, badge are the
    alternatives) and whether there is a legend, step markers, a worked example. **"None of the five groups fits

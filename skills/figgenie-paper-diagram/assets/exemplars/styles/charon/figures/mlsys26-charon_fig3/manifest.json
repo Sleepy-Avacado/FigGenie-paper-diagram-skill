@@ -1,0 +1,40 @@
+{
+  "id": "mlsys26-charon_fig3",
+  "kind": "architecture",
+  "paper_id": "mlsys26-charon",
+  "fig": "3",
+  "venue": "MLSys26",
+  "year": 2026,
+  "caption": "Figure 3: Architecture overview of proposed Charon simulator. The system consists of a graph-based frontend that constructs forward and backward computation graphs while applying optimizations and analyses; a multi-engine backend that accurately simulates both computation and communication operators; and a design explorer that searches for the optimal configuration through guided pruning.",
+  "title": "Charon: A Unified and Fine-Grained Simulator for Large-Scale LLM Training and Inference",
+  "authors": "Mengtian Yang, Zhekun Zhang, Mingheng Wu, Jianwen Yan, Hanshi Sun, Li-Wen Chang",
+  "arxiv": "2605.17164",
+  "style": "charon",
+  "origin": "style-reference",
+  "column": "double",
+  "aspect": 3.75,
+  "print_width_pt": 470,
+  "print_height_pt": 125.4,
+  "tool": "powerpoint",
+  "source_kind": "author",
+  "license": "arXiv non-exclusive distribution licence (http://arxiv.org/licenses/nonexclusive-distrib/1.0/); figures reproduced as a style reference with attribution, copyright stays with the authors",
+  "files": {
+    "source.svg": "author figure PDF converted to SVG (PyMuPDF, text kept as <text>), author units",
+    "preview.png": "the author figure at its printed width, 300 dpi",
+    "print.png": "the author figure at its printed width, 110 dpi",
+    "semantics.json": "hand-written semantic record",
+    "manifest.json": "this file"
+  },
+  "original_paths": {
+    "source.svg": "external-styles/charon/figs/fig_arch_overview.pdf"
+  },
+  "templates": [
+    {
+      "template": "flanked-core",
+      "star": true,
+      "why_chosen": "The canonical Charon-style overview: inputs on the left, the platform as one big rounded frame with three equal subsystem boxes, outputs on the right, the whole thing inside a thick black outer frame.",
+      "what_to_learn": "Title each flank and each subsystem with bold text, put the subsystem name at the bottom of its box, open each subsystem with a grey header bar, and fill only the leaves with the role colours (blue / peach / mint / pink); tiny glyphs (node-link graphs, timeline bars, a pruned tree) stand in for what each stage produces.",
+      "note_source": "hand"
+    }
+  ]
+}

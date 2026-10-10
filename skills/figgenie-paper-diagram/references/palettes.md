@@ -120,6 +120,21 @@ grouped by the hue of their ground (pink, teal, yellow and purple grounds were t
 
 `—` = no fill (outline only). `pastel-regions` also carries `region_tints`: `#fff2cc`, `#d5e8d4`, `#dae8fc`, `#f8cecc`, `#e1d5e7`.
 
+## Named-style palettes (one paper, not a corpus family)
+
+A named style (`styles/README.md`) brings its own palette, measured from that paper's figures. It is not a
+cluster of the corpus, carries no corpus share, and is meant to be used with `meta.style` set to the same id —
+its roles only make sense together with the style card's rules (outlines, bold type, text-colour accent).
+
+| id | container | lane | module | module-alt | accent | stroke | text | arrow-accent |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `charon` | — | `#fef3eb` | `#cddfff` | `#ffecd6` `#b5d8cb` `#ffc9c3` | `#6bb097` | `#042433` | `#000000` | `#178d6a` |
+
+`charon` also carries `header` (`#d9d9d9`, grey title bars and structure), `identity_fills` (blue / peach /
+mint / pink / grey, each with what it named in the paper), `region_tints`, `state_pairs` (solid / pale / line
+for green, blue and red, used by mechanism figures for normal vs degraded) and `text_colours` (ours `#178d6a`,
+baseline `#c00000`). Its accent is text colour, not a fill: see `styles/charon.md` §3.
+
 ## Mechanism figures (kind 2)
 
 The same 21 families serve the mechanism figures. Matching each of the 154 good mechanism figures with a semantic

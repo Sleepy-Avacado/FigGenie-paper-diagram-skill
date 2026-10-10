@@ -60,9 +60,10 @@ def card(p):
     # header
     a(f'<text x="16" y="24" font-size="15" font-weight="bold" fill="{text}">'
       f'{esc(p["name"])}</text>')
+    tag = (f'n={p["stats"]["n_figures"]} ({p["stats"]["share"]*100:.1f}%)' if p.get("stats")
+           else f'named style: {p.get("style", p["id"])}')          # a named style is one paper, not a corpus share
     a(f'<text x="584" y="24" font-size="11" text-anchor="end" fill="{muted}">'
-      f'{esc(p["id"])} &#183; n={p["stats"]["n_figures"]} '
-      f'({p["stats"]["share"]*100:.1f}%)</text>')
+      f'{esc(p["id"])} &#183; {esc(tag)}</text>')
     a(f'<line x1="16" y1="33" x2="584" y2="33" stroke="{muted}" stroke-width="0.6"/>')
 
     # ---- left: sample diagram -------------------------------------------------------

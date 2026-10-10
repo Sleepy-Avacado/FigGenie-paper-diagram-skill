@@ -59,3 +59,13 @@ it to) -- starred there when starred at all -- and unstarred under the record's 
 `references/mechanism/layouts.md` with `python3 scripts/distill/update_exemplar_tables.py --kind mechanism`.
 An architecture rebuild (`build_exemplars.py --clean`) keeps `mechanism/` and the mechanism figure dirs;
 `--kind mechanism --clean` removes only those.
+
+## Named styles (added 2026-10-09)
+
+`styles/<style>/` holds the figures of one paper whose look the user asked to reuse (`styles/charon/`: 7
+figures of the Charon paper, MLSys 2026). Same files per figure as above, plus `style` and
+`origin: style-reference` in `manifest.json`; `styles/<style>/index.json` lists them with their templates /
+groups and lessons. They are not rated corpus figures and are built by
+`scripts/distill/build_style_exemplars.py`, not `build_exemplars.py` (whose `--clean` leaves `styles/` alone).
+`scripts/find_exemplars.py` searches them together with the corpus; `--style <style>` lists them first. Read
+`references/styles/<style>.md` for how to use the look.

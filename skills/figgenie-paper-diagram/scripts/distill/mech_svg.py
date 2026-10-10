@@ -278,6 +278,15 @@ def subtractive_cut(root, keep, viewbox, prefix='', comment=None, prune_resource
                 node.remove(ch)
     prune(doc)
 
+    # drop containers left empty BEFORE collecting references: an emptied <g clip-path="url(#c)"> still names its clip
+    # path, and PDF exports wrap every drawing operation in one, so the cut kept every clip path of the page (thousands)
+    def empty_out(node):
+        for ch in list(node):
+            if local(ch) in CONTAINERS:
+                empty_out(ch)
+                if not any(local(g) not in (None, 'title', 'desc') for g in ch): node.remove(ch)
+    empty_out(doc)
+
     # resources: keep only what the remaining drawing references (transitively)
     ids = {}
     for n in doc.iter():
@@ -340,12 +349,7 @@ def subtractive_cut(root, keep, viewbox, prefix='', comment=None, prune_resource
     if drop_fonts:
         clean_fonts(doc)
 
-    # drop containers left empty
-    def empty_out(node):
-        for ch in list(node):
-            if local(ch) in CONTAINERS:
-                empty_out(ch)
-                if not any(local(g) not in (None, 'title', 'desc') for g in ch): node.remove(ch)
+    # drop containers left empty (again: resource pruning can empty a <defs>-only group)
     empty_out(doc)
 
     if prefix:

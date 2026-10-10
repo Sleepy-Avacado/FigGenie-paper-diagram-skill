@@ -8,7 +8,8 @@ description: >
   caption draft, then iterate on feedback. Use whenever the user wants an architecture, overview, system,
   design or deployment figure for a paper or talk ("架构图", "系统总览图", "画一张 overview 图", "论文插图",
   "把这张图重画/改风格"), asks how such a figure should be laid out, coloured or annotated, or wants an
-  existing architecture figure critiqued against top-venue conventions. Figures that need the paper's own
+  existing architecture figure critiqued against top-venue conventions, or drawn in a named paper style the user
+  asks for ("Charon 风格": ink-outlined pastel boxes, bold labels, framed panels). Figures that need the paper's own
   symbols get vector TeX formulas rendered into the SVG (only when needed); on request a finished figure is
   also exported as an editable PowerPoint deck ("转成可编辑的 PPT", native shapes and equations). Also draws
   **mechanism figures** — how one part of a system works: a walkthrough with numbered steps, before/after or
@@ -18,7 +19,7 @@ description: >
   records. Not for data plots or charts.
 ---
 
-# figgenie-paper-diagram (FigGenie 图精灵) — architecture and mechanism figures the way top systems papers draw them
+# figgenie-paper-diagram (FigGenie-Skill) — architecture and mechanism figures the way top systems papers draw them
 
 You draw the SVG yourself. The scripts do not lay out for you; they measure text, render, lint and show you
 the result so you can fix it. Everything is in **pt at print size**: a single-column figure is ≈ 240 pt wide,
@@ -42,7 +43,7 @@ Work in a folder per figure: `brief.md`, `spec.json`, `plan.md`, `fig.svg`, and 
 1. **Intake → brief.** Read what the user gave (paper sections, notes, an old figure, chat). Write the brief
    (`references/brief-template.md`): what the figure is, every component with new / existing / external tags
    and its container, the numbered main path and secondary flows, the one point the figure argues, layout and
-   style intent with the closest exemplar ids, 3–5 assumptions to confirm with their source, a caption draft.
+   style intent with the closest exemplar ids (search them by domain and content as in step 3), 3–5 assumptions to confirm with their source, a caption draft.
    Infer first; ask only what changes the structure and cannot be read from the material (usually "which parts
    are new" and "which path is the main one"), at most three points in one message, each phrased as your guess
    plus the alternative (`references/spec-guide.md` §1). **Gate: the user confirms the brief.**
@@ -54,19 +55,38 @@ Work in a folder per figure: `brief.md`, `spec.json`, `plan.md`, `fig.svg`, and 
    templates have `custom`.
 3. **Template, exemplars, palette, encoding.** Pick the template with the decision table in
    `references/layouts.md` ("Choosing a template", then the one template section you need; 20 ids: 7 core +
-   13 added). Open two or three exemplars of that template: `assets/exemplars/<template>/index.json` lists
-   them (starred = must-see, each with a one-line lesson) — LOOK at `assets/exemplars/figures/<id>/print.png`
-   (or `preview.png`) and skim `semantics.json`; imitate their arrangement, density and restraint. Choose a palette from
+   13 added). Then look at exemplars along two lines, because the template says how the corpus arranges a
+   figure and the content says how this field draws its objects:
+   - **by template**: two or three from `assets/exemplars/<template>/index.json` (starred = must-see, each with
+     a one-line lesson);
+   - **by domain, content and meaning**: `python3 scripts/find_exemplars.py --domain "<field, kind of system>"
+     --content "<what is drawn: components, structures, objects>" --semantics "<the point the figure argues>"`
+     with the words of the brief ranks all 485 exemplars of both kinds; open the top three to five whose systems
+     resemble yours, whatever their template. This is where a field's habits come from — how LLM-serving papers
+     draw KV blocks and instance pools, how storage papers draw tiers, how a quota service draws its buckets.
+     Usually five to eight figures in all. When the matches are only generic words, the corpus has nothing from
+     this field: say so in the plan and lean on the template exemplars.
+
+   LOOK at each `assets/exemplars/figures/<id>/print.png` (or `preview.png`) and skim `semantics.json`; imitate
+   their arrangement, density and restraint, and borrow the devices that make your content visible. Choose a palette from
    `references/palettes.json` (one accent, grey for existing parts, white canvas). The 20 templates are the
    arrangements the corpus uses most, not moulds: when the system's structure is something else, `custom` with a
    `notes` line is the right answer, and an exemplar is imitated for its restraint and density, not copied. Take the default encodings
    from `references/encoding.md` Part D (solid = data, dashed = one meaning per figure, thick = main path,
    circled numbers = the walkthrough, `×N` for repetition, red only for errors / bottlenecks).
+
+   **Named style** — only when the user asks for one paper's look (today: `charon`, see
+   `references/styles/README.md`): set `meta.style`, `meta.palette` and `meta.font` as its card says, read the
+   card (`references/styles/<id>.md`) before the plan, and add two or three of its figures to the exemplars
+   (`find_exemplars.py --style <id> …` lists them first). The style replaces weight, outlines, fill roles and
+   framing; the template, the content search and every print floor (type ≥ 6 pt included) stay as above.
 4. **Drawing plan.** Write `plan.md` (`references/drawing-plan.md`): canvas and grid, regions, per-node
    placement and size, routes, emphasis, legend, and a 4–6 item check list for the PNG. Size boxes from
    measured labels: `python3 scripts/measure_text.py --font <key> --size 7 "Label" …` (CJK runs are measured with the
    companion `--cjk` key; `--box` prints the box size; width + 8 pt,
-   1.4 × size per line + 6 pt). If the plan does not fit at these numbers, the content is too much — go back to
+   1.4 × size per line + 6 pt). Place labels with `python3 scripts/place_text.py --font <key> --size 6.5 center --box
+   x,y,w,h [--rotate -90] "Label"` (baseline from the font, the linter's own centring model; `line` for text with an
+   inline ① disc). If the plan does not fit at these numbers, the content is too much — go back to
    the brief and merge or split; never shrink type below 6 pt. Formulas, only when the figure carries the paper's
    symbols: measure them the same way with `python3 scripts/tex_measure.py --size 6.5 --box '<tex>'` (`--mixed '… $tex$ …'
    --emit` lays out a label with inline formulas and prints the elements to paste); see `references/formulas.md`.
@@ -75,6 +95,8 @@ Work in a folder per figure: `brief.md`, `spec.json`, `plan.md`, `fig.svg`, and 
    `<text>`), `e:` for edges (with `data-from`/`data-to`, `marker-end`), `c:` containers, `l:` lanes, `s:` step
    badges, `a:` annotations, `legend`. Text stays `<text>`; a formula is the one exception — a `<g data-symbol="tex" data-tex="…" data-x data-y data-size data-anchor/>`
    placeholder that `tex_fill.py` renders to paths (`references/formulas.md`); no gradients, filters or external refs.
+   Mark a group drawn to scale from numbers (bars, Gantt rows) `data-scale="data"` and a label set beside its box on
+   purpose `data-label="outside"` (spec-guide §4): the linter then stops asking you to snap data or centre that label.
    A bitmap — a sample input or output, a photo, a screenshot, a rendered result, an icon — is an `<image>` in its
    node's group: a PNG / JPEG in the figure folder linked by a relative path, never a URL (`references/spec-guide.md`
    §4 "Bitmaps").
@@ -115,7 +137,9 @@ none of the 146 exemplars is the expected outcome, not a failure.
 
 - **Deciding the kind (step 1).** Whole-system overview → architecture. What happens inside one component, one
   data structure, one exchange, one decision, or how alternatives differ → mechanism. Both → the one the caption
-  leads with; the other becomes an inset or a second figure (`references/spec-guide.md` §7).
+  leads with; the other becomes an inset or a second figure (`references/spec-guide.md` §7). One overview figure
+  that the user wants to hold unlike drawings (a structure, numbers to scale, a timeline, a loop) → a composite:
+  its panels are parts (`axis: part`), each budgeted on its own (`references/spec-guide.md` §8).
 - **Brief (step 1).** Same seven sections, three of them read differently (`references/brief-template.md`,
   "Mechanism figures"): §2 names the structure(s) that will be drawn and what is repeated versus what differs;
   §3 narrates the story the reader follows — steps along a path, transitions and their guards, before → after
@@ -130,7 +154,9 @@ none of the 146 exemplars is the expected outcome, not a failure.
 - **Group, base, arrangement, exemplars, encoding (step 3).** `references/mechanism/layouts.md` "Choosing the
   group, the base, the arrangement" (five questions, then one group section: drawing plan, numbers, variants
   with figure ids, pitfalls, and "Inventing an arrangement" when nothing fits). Open two or three starred
-  exemplars of the group: `assets/exemplars/mechanism/<group>/index.json`, then LOOK at
+  exemplars of the group (`assets/exemplars/mechanism/<group>/index.json`), and three to five found by domain,
+  content and meaning (`scripts/find_exemplars.py ... --kind mechanism --group <group>`, as in step 3 above: the
+  structure being explained, its field, the difference or order the reader must see); LOOK at each
   `assets/exemplars/figures/<id>/print.png`. Read the exemplars to sharpen your own plan, not to pick one to reproduce — the group section's variants
   and pitfalls are there to widen the options, and `group: other` exists for a figure that is none of the five.
   Encoding defaults and when to leave them:
@@ -168,6 +194,9 @@ above does not depend on it.
 | writing the spec | `references/spec-guide.md` §3–6; `references/spec-schema.json` on demand; `assets/specs/examples/*.json` for spec syntax only (style comes from `assets/exemplars/`) | 120 |
 | choosing the template | `references/layouts.md` "Choosing a template" + "Cross-template conventions" (lines 1434–1535), then one template section | ~120 |
 | colours | `references/palettes.md` (roles, the 11 hue families + 10 ground families, what not to do) and the matching entry in `palettes.json` | 161 |
+| a composite figure (several kinds of drawing in one figure); what to cut when it does not fit | `references/spec-guide.md` §8 | 45 |
+| placing a label exactly (centred, turned up a bar, with an inline ① disc); data drawn to scale; a label beside its box | `scripts/place_text.py`; `references/spec-guide.md` §4 "Placing labels, drawing to scale" | 15 |
+| a named style the user asked for (`meta.style`, e.g. `charon`) | `references/styles/README.md`, then the card `references/styles/<id>.md`; its figures in `assets/exemplars/styles/<id>/` | 40 + 150 |
 | deciding the kind; a mechanism brief / spec | `references/spec-guide.md` §7 (`meta.kind = mechanism`: groups, panels / deltas / values, SVG contract additions); `references/brief-template.md` "Mechanism figures" | 50 + 40 |
 | mechanism: group, base, arrangement | `references/mechanism/layouts.md` "How to read this" + "Choosing the group, the base, the arrangement", then one group section (or "Inventing an arrangement") | 130 + ~100 |
 | mechanism: what marks a difference / a step / a state | `references/mechanism/encoding.md` Part E table first (defaults + when to deviate), then the part the figure needs (A states, B markers, C colour / lines / shapes, D worked values) | 60–200 |
@@ -180,7 +209,7 @@ above does not depend on it.
 | a bitmap in the figure (sample, photo, screenshot, rendered result, icon) | `references/spec-guide.md` §4 "Bitmaps"; `references/encoding.md` A13 | 30 |
 | an editable PowerPoint copy (optional, after delivery) | `references/pptx-export.md`; `scripts/svg2pptx.py`, `scripts/pptx_check.py` | 80 |
 | parts | `assets/symbols/README.md`, `index.json` (search by name / tags / depicts; mechanism parts also by `family`, `theme`, `figure_kinds`, filter `subtype`), `catalog-icon|motif|shape.png` (architecture parts), `catalog-mech-<theme>.png` (mechanism parts by theme) | — |
-| exemplars | `assets/exemplars/<template>/index.json` (architecture) or `assets/exemplars/mechanism/<group>/index.json` (mechanism), starred first with one-line lessons; per figure `assets/exemplars/figures/<id>/` with `print.png`, `preview.png` (author render, when present), `source.svg`, `semantics.json`, `manifest.json` (`kind` says which). Reference and reinforcement only: borrow the device that serves your figure, never the layout wholesale | — |
+| exemplars | `assets/exemplars/<template>/index.json` (architecture) or `assets/exemplars/mechanism/<group>/index.json` (mechanism), starred first with one-line lessons; `scripts/find_exemplars.py` searches all of them by domain, content and meaning; per figure `assets/exemplars/figures/<id>/` with `print.png`, `preview.png` (author render, when present), `source.svg`, `semantics.json`, `manifest.json` (`kind` says which). Reference and reinforcement only: borrow the device that serves your figure, never the layout wholesale | — |
 
 ## Rules that are not negotiable
 
@@ -241,13 +270,15 @@ real values; 55 % have no container fill at all; 85 % of logic transitions carry
   (icons, motifs, shapes; 503 cut from corpus figures, 89 original line-art) and 2,261 for mechanism figures
   (`subtype: mechanism` in `index.json`; icons, motifs, shapes and `device` narrative devices cut from 705
   mechanism figures, grouped into 155 families under 11 themes); browse the catalog PNGs.
-- `assets/palettes/` — swatch cards for the 21 palettes (11 hue families + 10 ground families: outline-only or tinted containers); `assets/fonts/` — open fonts + `fonts.json` map.
+- `references/styles/` + `assets/exemplars/styles/` — named styles: one paper's look the user asked to reuse
+  (`charon`: card, lint / validator JSON, palette, 7 exemplar figures). Used only when `meta.style` names one.
+- `assets/palettes/` — swatch cards for the 21 corpus palettes + 1 named-style palette (11 hue families + 10 ground families: outline-only or tinted containers); `assets/fonts/` — open fonts + `fonts.json` map.
 - `assets/specs/examples/` — four specs reverse-engineered from corpus exemplars (`asplos25-100_fig5`,
   `asplos25-167_fig1`, `asplos26-132_fig6`; `asplos25-006_fig1` is the mechanism one: a comparison with panels
   and deltas), kept only as examples of how a spec is written. For style, use the
   exemplar library, not these specs: each spec's `_source` points at the figure it was written from in
   `assets/exemplars/figures/`.
-- `scripts/` — `spec_validate.py`, `measure_text.py`, `render.py`, `lint.py`, `embed_fonts.py`, `export_pdf.py`,
+- `scripts/` — `find_exemplars.py`, `spec_validate.py`, `measure_text.py`, `place_text.py`, `render.py`, `lint.py`, `embed_fonts.py`, `export_pdf.py`,
   `svg_edit.py`, `preview.py`, `check.py` (see `scripts/README.md`); `scripts/distill/` re-derives the references from the corpus.
   Formulas: `tex_measure.py`, `tex_fill.py` (MathJax in `scripts/mathjax/`); PowerPoint export: `svg2pptx.py`, `pptx_check.py`.
 

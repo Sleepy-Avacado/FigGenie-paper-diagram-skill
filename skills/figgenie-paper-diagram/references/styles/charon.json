@@ -1,0 +1,14 @@
+{
+ "_doc": "Machine-readable part of the named style 'charon' (prose and evidence: charon.md). Read by lint.py and spec_validate.py when spec meta.style == 'charon'. Everything here is advisory (warn / info); the print floors of the default rules (type >= 6 pt, canvas, contrast) are not relaxed.",
+ "style": "charon",
+ "palette": "charon",
+ "font": "calibri",
+ "lint": {
+  "max_saturated_fills": 4,
+  "bold_text_share_min": 0.6,
+  "outlined_node_share_min": 0.8,
+  "outline_max_lightness": 0.35,
+  "stroke_box_pt": [0.5, 0.85],
+  "stroke_frame_pt": [1.0, 1.6]
+ }
+}

@@ -1,0 +1,47 @@
+{
+  "id": "mlsys26-charon_fig4",
+  "kind": "architecture",
+  "paper_id": "mlsys26-charon",
+  "fig": "4",
+  "venue": "MLSys26",
+  "year": 2026,
+  "caption": "Figure 4: Frontend architecture of proposed Charon simulator. (a) Trace and generate forward and backward groups from native PyTorch models. (b) Apply compiler-style passes for optimizations and analyses.",
+  "title": "Charon: A Unified and Fine-Grained Simulator for Large-Scale LLM Training and Inference",
+  "authors": "Mengtian Yang, Zhekun Zhang, Mingheng Wu, Jianwen Yan, Hanshi Sun, Li-Wen Chang",
+  "arxiv": "2605.17164",
+  "style": "charon",
+  "origin": "style-reference",
+  "column": "single",
+  "aspect": 1.26,
+  "print_width_pt": 228,
+  "print_height_pt": 180.9,
+  "tool": "powerpoint",
+  "source_kind": "author",
+  "license": "arXiv non-exclusive distribution licence (http://arxiv.org/licenses/nonexclusive-distrib/1.0/); figures reproduced as a style reference with attribution, copyright stays with the authors",
+  "files": {
+    "source.svg": "author figure PDF converted to SVG (PyMuPDF, text kept as <text>), author units",
+    "preview.png": "the author figure at its printed width, 300 dpi",
+    "print.png": "the author figure at its printed width, 110 dpi",
+    "semantics.json": "hand-written semantic record",
+    "manifest.json": "this file"
+  },
+  "original_paths": {
+    "source.svg": "external-styles/charon/figs/fig_arch_frontend.pdf"
+  },
+  "templates": [
+    {
+      "template": "two-panel",
+      "star": true,
+      "why_chosen": "Two stacked panels separated by a dash-dot rule: (a) a tracing pipeline from a native model to forward / backward graphs, (b) three tinted dotted pass groups between two rotated grey bookend bars.",
+      "what_to_learn": "Use rotated grey bars as the input and output bookends of a pass pipeline, give each pass family a pale dotted region (peach / blue / pink) holding white rounded steps with vertical ellipses, and draw graphs as pastel node-link glyphs coloured by direction (blue forward, pink backward).",
+      "note_source": "hand"
+    },
+    {
+      "template": "pipeline",
+      "star": false,
+      "why_chosen": "Panel (b) is a left-to-right pipeline of three pass groups whose steps run top-down inside each group.",
+      "what_to_learn": "Hand off between groups with an elbow arrow from the last step of one group to the first of the next.",
+      "note_source": "hand"
+    }
+  ]
+}
